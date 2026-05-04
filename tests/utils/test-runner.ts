@@ -31,6 +31,7 @@ import {
   initStakeAccount,
   initStakeDelegate,
   getStakeDelegateAddress,
+  withdrawStakeDelegate,
   stakeAsOwner,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
@@ -684,12 +685,21 @@ export class TestRunner {
             this.getArciumConfig(computationOffset)
           );
 
+          // 5. close the now-empty delegate account, refunding rent to owner
+          const withdrawDelegateIx = await withdrawStakeDelegate({
+            owner: user.solanaKeypair,
+            stakeAccount: stakeAccountAddress,
+            mint: this.mint.address,
+            ownerTokenAccount: user.tokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS,
+          });
+
           await sendTransaction(
             this.rpc,
             this.sendAndConfirm,
             user.solanaKeypair,
-            [initIx, initDelegateIx, fundDelegateIx, stakeIx],
-            { label: `Stake on option (init+delegate+fund+stake)` }
+            [initIx, initDelegateIx, fundDelegateIx, stakeIx, withdrawDelegateIx],
+            { label: "Stake on option" }
           );
 
           const result = await awaitComputationFinalization(this.rpc, computationOffset);

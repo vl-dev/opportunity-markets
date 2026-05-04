@@ -41,8 +41,7 @@ pub struct Stake<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Stake delegate PDA — bound to this specific stake_account, funds the
-    /// stake transfer via PDA-signed CPI from `stake_delegate_ata`.
+    /// Stake delegate PDA bound to this specific stake_account.
     #[account(
         seeds = [STAKE_DELEGATE_SEED, stake_account.key().as_ref()],
         bump = stake_delegate.bump,
@@ -50,6 +49,7 @@ pub struct Stake<'info> {
     )]
     pub stake_delegate: Box<Account<'info, StakeDelegate>>,
 
+    /// Funds the stake.
     #[account(
         mut,
         associated_token::mint = token_mint,

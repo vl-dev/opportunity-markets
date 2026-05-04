@@ -18,6 +18,7 @@ import {
   stakeAsDelegate,
   signStakeMessage,
   getStakeDelegateAddress,
+  withdrawStakeDelegate,
   randomComputationOffset,
   awaitComputationFinalization,
   fetchStakeAccount,
@@ -1069,6 +1070,7 @@ describe("OpportunityMarket", () => {
     const userASigner = runner.getUserSigner(userA);
     const userBSigner = runner.getUserSigner(userB);
     const userATokenAccount = runner.getUserTokenAccount(userA);
+    const userBTokenAccount = runner.getUserTokenAccount(userB);
     const bX25519 = runner.getUserX25519Keypair(userB);
     const mxePublicKey = runner.getMxePublicKey();
     const rpc = runner.getRpc();
@@ -1171,9 +1173,23 @@ describe("OpportunityMarket", () => {
       },
       { clusterOffset: arciumClusterOffset, computationOffset, programId },
     );
-    await sendTransaction(rpc, sendAndConfirm, userASigner, [stakeIx], {
-      label: "A submits stake (delegate path)",
+
+    // B closes the now-empty delegate in the same tx, refunding rent to B
+    const withdrawDelegateIx = await withdrawStakeDelegate({
+      owner: userBSigner,
+      stakeAccount: stakeAccountAddress,
+      mint,
+      ownerTokenAccount: userBTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
+    const { signature: txSignature } = await sendTransaction(
+      rpc,
+      sendAndConfirm,
+      userASigner,
+      [stakeIx, withdrawDelegateIx],
+      { label: "A submits stake + B closes delegate" },
+    );
+    expect(txSignature).to.be.a("string");
 
     const result = await awaitComputationFinalization(rpc, computationOffset);
     expect(result.error, `MPC callback should succeed, got: ${result.error ?? ""}`).to.be.undefined;
