@@ -17,7 +17,7 @@ pub use state::*;
 pub const COMP_DEF_OFFSET_STAKE: u32 = comp_def_offset("stake");
 pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
 
-declare_id!("BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C");
+declare_id!("B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg");
 
 #[arcium_program]
 pub mod opportunity_market {
@@ -104,8 +104,8 @@ pub mod opportunity_market {
         )
     }
 
-    pub fn add_market_option(ctx: Context<AddMarketOption>) -> Result<()> {
-        instructions::add_market_option(ctx)
+    pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Result<()> {
+        instructions::add_market_option(ctx, option_id)
     }
 
     pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {

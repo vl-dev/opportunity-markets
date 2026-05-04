@@ -1,5 +1,5 @@
 {
-  "address": "BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C",
+  "address": "B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg",
   "metadata": {
     "name": "opportunity_market",
     "version": "0.1.0",
@@ -23,7 +23,10 @@
         {
           "name": "market_authority",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -50,9 +53,8 @@
                 "path": "market"
               },
               {
-                "kind": "account",
-                "path": "market.total_options",
-                "account": "OpportunityMarket"
+                "kind": "arg",
+                "path": "option_id"
               }
             ]
           }
@@ -62,7 +64,12 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "option_id",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "add_reward",
@@ -1848,7 +1855,10 @@
       "accounts": [
         {
           "name": "market_authority",
-          "signer": true
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -2230,7 +2240,10 @@
       "accounts": [
         {
           "name": "market_authority",
-          "signer": true
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -2504,7 +2517,10 @@
       "accounts": [
         {
           "name": "market_authority",
-          "signer": true
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",

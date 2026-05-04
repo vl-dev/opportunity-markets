@@ -6,6 +6,7 @@ use crate::events::{emit_ts, MarketOptionCreatedEvent};
 use crate::state::{OpportunityMarket, OpportunityMarketOption};
 
 #[derive(Accounts)]
+#[instruction(option_id: u64)]
 pub struct AddMarketOption<'info> {
     #[account(mut)]
     pub market_authority: Signer<'info>,
@@ -21,7 +22,7 @@ pub struct AddMarketOption<'info> {
         init,
         payer = market_authority,
         space = 8 + OpportunityMarketOption::INIT_SPACE,
-        seeds = [OPTION_SEED, market.key().as_ref(), &market.total_options.to_le_bytes()],
+        seeds = [OPTION_SEED, market.key().as_ref(), &option_id.to_le_bytes()],
         bump,
     )]
     pub option: Box<Account<'info, OpportunityMarketOption>>,
@@ -29,7 +30,7 @@ pub struct AddMarketOption<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn add_market_option(ctx: Context<AddMarketOption>) -> Result<()> {
+pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     // Enforce staking period is not over (if market is open)
@@ -43,13 +44,13 @@ pub fn add_market_option(ctx: Context<AddMarketOption>) -> Result<()> {
         );
     }
 
+    // Increment total options
+    market.total_options += 1;
+
     // Initialize the option account
     let option = &mut ctx.accounts.option;
     option.bump = ctx.bumps.option;
-    option.id = market.total_options;
-
-    // Increment total options
-    market.total_options += 1;
+    option.id = option_id;
 
     emit_ts!(MarketOptionCreatedEvent {
         option: option.key(),

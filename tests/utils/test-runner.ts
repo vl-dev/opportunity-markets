@@ -196,7 +196,7 @@ export class TestRunner {
   private marketAddress: Address;
   private marketCreator: TestUser;
   private marketConfig: MarketConfig;
-  private nextOptionId: number;
+  private usedOptionIds: Set<number>;
   private openTimestamp: bigint | null = null;
 
   // Users: Map<address string, TestUser>
@@ -205,7 +205,7 @@ export class TestRunner {
   private constructor() {
     // Private constructor - use static initialize()
     this.users = new Map();
-    this.nextOptionId = 0;
+    this.usedOptionIds = new Set();
   }
 
   // ============================================================================
@@ -600,12 +600,16 @@ export class TestRunner {
   // ============================================================================
 
   async addOption(): Promise<{ optionId: number }> {
-    const optionId = this.nextOptionId++;
+    let optionId: number;
+    do {
+      optionId = Math.floor(Math.random() * 1_000_000_000) + 1;
+    } while (this.usedOptionIds.has(optionId));
+    this.usedOptionIds.add(optionId);
 
     const addOptionIx = await addMarketOption({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
-      nextOptionId: optionId,
+      optionId,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [addOptionIx], {
