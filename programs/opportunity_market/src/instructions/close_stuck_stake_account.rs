@@ -28,7 +28,6 @@ pub struct CloseStuckStakeAccount<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market's ATA — holds both staked tokens and uncollected fees.
     #[account(
         mut,
         associated_token::mint = token_mint,

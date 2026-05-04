@@ -10,7 +10,7 @@ pub struct InitStakeAccount<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: stake account owner — verified by being a PDA seed input.
+    /// CHECK: owner is verified by being a PDA seed input.
     /// No signature required: this instruction is permissionless.
     pub owner: UncheckedAccount<'info>,
 

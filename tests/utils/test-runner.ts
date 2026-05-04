@@ -661,7 +661,7 @@ export class TestRunner {
             amount: p.amount,
           });
 
-          // 4. stake — pulls from the (just-funded) delegate ATA into market
+          // 4. stake
           const inputNonce = randomBytes(16);
           const optionCiphertext = cipher.encrypt([BigInt(p.optionId)], inputNonce);
           const computationOffset = randomComputationOffset();

@@ -283,8 +283,8 @@ pub fn stake_callback(
     ctx: Context<StakeCallback>,
     output: SignedComputationOutputs<StakeOutput>,
 ) -> Result<()> {
-    // Verify output — on failure, revert so the account stays stuck
-    // and the owner can recover via close_stuck_stake_account
+    // On failure, revert so the account stays stuck.
+    // The owner can recover via close_stuck_stake_account.
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
