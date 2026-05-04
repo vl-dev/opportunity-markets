@@ -31,7 +31,7 @@ import {
   initStakeAccount,
   initStakeDelegate,
   getStakeDelegateAddress,
-  stake,
+  stakeAsOwner,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
   incrementOptionTally,
@@ -620,19 +620,7 @@ export class TestRunner {
           const stakeAccountId = this.getNextStakeAccountId(user);
           const stakeAccountNonce = deserializeLE(randomBytes(16));
 
-          // Init stake account
-          const initIx = await initStakeAccount({
-            payer: user.solanaKeypair,
-            owner: user.solanaKeypair.address,
-            market: this.marketAddress,
-            stakeAccountId,
-          });
-
-          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initIx], {
-            label: `Init stake account`,
-          });
-
-          // Init stake delegate + fund its ATA
+          // Derive PDAs for the bundled tx
           const [stakeAccountAddress] = await getStakeAccountAddressPda(p.userId, this.marketAddress, stakeAccountId);
           const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, this.programId);
           const [stakeDelegateAta] = await findAssociatedTokenPda({
@@ -640,7 +628,21 @@ export class TestRunner {
             owner: stakeDelegateAddress,
             tokenProgram: TOKEN_PROGRAM_ADDRESS,
           });
+          const [marketAta] = await findAssociatedTokenPda({
+            mint: this.mint.address,
+            owner: this.marketAddress,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS,
+          });
 
+          // 1. init_stake_account
+          const initIx = await initStakeAccount({
+            payer: user.solanaKeypair,
+            owner: user.solanaKeypair.address,
+            market: this.marketAddress,
+            stakeAccountId,
+          });
+
+          // 2. init_stake_delegate (PDA + ATA owned by the PDA)
           const initDelegateIx = await initStakeDelegate({
             owner: user.solanaKeypair,
             stakeAccount: stakeAccountAddress,
@@ -649,28 +651,21 @@ export class TestRunner {
             tokenProgram: TOKEN_PROGRAM_ADDRESS,
             authority: null,
           });
+
+          // 3. fund the delegate ATA
           const fundDelegateIx = getTransferInstruction({
             source: user.tokenAccount,
             destination: stakeDelegateAta,
             authority: user.solanaKeypair,
             amount: p.amount,
           });
-          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initDelegateIx, fundDelegateIx], {
-            label: `Init stake delegate + fund`,
-          });
 
-          // Build stake instruction
+          // 4. stake — pulls from the (just-funded) delegate ATA into market
           const inputNonce = randomBytes(16);
           const optionCiphertext = cipher.encrypt([BigInt(p.optionId)], inputNonce);
           const computationOffset = randomComputationOffset();
 
-          const [marketAta] = await findAssociatedTokenPda({
-            mint: this.mint.address,
-            owner: this.marketAddress,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
-
-          const stakeIx = await stake(
+          const stakeIx = await stakeAsOwner(
             {
               payer: user.solanaKeypair,
               market: this.marketAddress,
@@ -689,9 +684,13 @@ export class TestRunner {
             this.getArciumConfig(computationOffset)
           );
 
-          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeIx], {
-            label: `Stake on option`,
-          });
+          await sendTransaction(
+            this.rpc,
+            this.sendAndConfirm,
+            user.solanaKeypair,
+            [initIx, initDelegateIx, fundDelegateIx, stakeIx],
+            { label: `Stake on option (init+delegate+fund+stake)` }
+          );
 
           const result = await awaitComputationFinalization(this.rpc, computationOffset);
           this.assertComputationSucceeded(result, "stakeOnOption");
@@ -920,7 +919,7 @@ export class TestRunner {
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
 
-    const stakeIx = await stake(
+    const stakeIx = await stakeAsOwner(
       {
         payer: user.solanaKeypair,
         market: this.marketAddress,

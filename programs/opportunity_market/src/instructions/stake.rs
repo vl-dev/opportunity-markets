@@ -4,6 +4,7 @@ use anchor_spl::token_interface::{
 };
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
+use brine_ed25519::sig_verify;
 
 use crate::constants::{STAKE_ACCOUNT_SEED, STAKE_DELEGATE_SEED};
 use crate::error::ErrorCode;
@@ -110,13 +111,15 @@ pub fn stake(
     authorized_reader_nonce: u128,
     user_pubkey: [u8; 32],
     state_nonce: u128,
+    signature_expiry_timestamp: u64,
+    owner_signature: [u8; 64],
 ) -> Result<()> {
     require!(amount > 0, ErrorCode::InsufficientBalance);
 
     // Enforce staking period is active
     let market = &ctx.accounts.market;
     let authorized_reader_pubkey = market.authorized_reader_pubkey;
-    let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
+    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
     let stake_end_timestamp = open_timestamp + market.time_to_stake;
@@ -135,6 +138,41 @@ pub fn stake(
     let net_amount = amount
         .checked_sub(fee)
         .ok_or(ErrorCode::Overflow)?;
+
+    // Authorize the stake.
+    // - If `payer == stake_account.owner` we skip ed25519 verification.
+    // - Otherwise the payer must equal `stake_delegate.authority` AND the
+    //   stake_account.owner must have produced an ed25519 signature over the
+    //   canonical input message, time-limited via signature_expiry_timestamp.
+    let owner_key = ctx.accounts.stake_account.owner;
+    let payer_key = ctx.accounts.payer.key();
+
+    if owner_key != payer_key {
+        require!(
+            ctx.accounts.stake_delegate.authority == payer_key,
+            ErrorCode::Unauthorized
+        );
+
+        require!(
+            current_timestamp <= signature_expiry_timestamp,
+            ErrorCode::SignatureExpired
+        );
+
+        let stake_account_key = ctx.accounts.stake_account.key();
+        let mut msg = Vec::with_capacity(32 + 8 + 16 + 16 + 16 + 32 + 8 + 32);
+        msg.extend_from_slice(stake_account_key.as_ref());
+        msg.extend_from_slice(&net_amount.to_le_bytes());
+        msg.extend_from_slice(&state_nonce.to_le_bytes());
+        msg.extend_from_slice(&input_nonce.to_le_bytes());
+        msg.extend_from_slice(&authorized_reader_nonce.to_le_bytes());
+        msg.extend_from_slice(&selected_option_ciphertext);
+        msg.extend_from_slice(&signature_expiry_timestamp.to_le_bytes());
+        msg.extend_from_slice(&user_pubkey);
+
+        let owner_pk_bytes = owner_key.to_bytes();
+        sig_verify(&owner_pk_bytes, &owner_signature, &msg)
+            .map_err(|_| error!(ErrorCode::InvalidSignature))?;
+    }
 
     // Transfer the full `amount` (net stake + fee portion) from the
     // stake_delegate ATA into the market ATA, signed by the stake_delegate

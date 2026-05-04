@@ -46,6 +46,7 @@ import {
   type ParsedUnstakeEarlyInstruction,
   type ParsedUpdateCentralStateInstruction,
   type ParsedWithdrawRewardInstruction,
+  type ParsedWithdrawStakeDelegateInstruction,
 } from '../instructions';
 
 export const OPPORTUNITY_MARKET_PROGRAM_ADDRESS =
@@ -252,6 +253,7 @@ export enum OpportunityMarketInstruction {
   UnstakeEarly,
   UpdateCentralState,
   WithdrawReward,
+  WithdrawStakeDelegate,
 }
 
 export function identifyOpportunityMarketInstruction(
@@ -610,6 +612,17 @@ export function identifyOpportunityMarketInstruction(
   ) {
     return OpportunityMarketInstruction.WithdrawReward;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([146, 167, 81, 107, 8, 5, 183, 53])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.WithdrawStakeDelegate;
+  }
   throw new Error(
     'The provided instruction could not be identified as a opportunityMarket instruction.'
   );
@@ -713,4 +726,7 @@ export type ParsedOpportunityMarketInstruction<
     } & ParsedUpdateCentralStateInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.WithdrawReward;
-    } & ParsedWithdrawRewardInstruction<TProgram>);
+    } & ParsedWithdrawRewardInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.WithdrawStakeDelegate;
+    } & ParsedWithdrawStakeDelegateInstruction<TProgram>);

@@ -159,6 +159,8 @@ export type StakeInstructionData = {
   authorizedReaderNonce: bigint;
   userPubkey: Array<number>;
   stateNonce: bigint;
+  signatureExpiryTimestamp: bigint;
+  ownerSignature: Array<number>;
 };
 
 export type StakeInstructionDataArgs = {
@@ -170,6 +172,8 @@ export type StakeInstructionDataArgs = {
   authorizedReaderNonce: number | bigint;
   userPubkey: Array<number>;
   stateNonce: number | bigint;
+  signatureExpiryTimestamp: number | bigint;
+  ownerSignature: Array<number>;
 };
 
 export function getStakeInstructionDataEncoder(): FixedSizeEncoder<StakeInstructionDataArgs> {
@@ -187,6 +191,8 @@ export function getStakeInstructionDataEncoder(): FixedSizeEncoder<StakeInstruct
       ['authorizedReaderNonce', getU128Encoder()],
       ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['stateNonce', getU128Encoder()],
+      ['signatureExpiryTimestamp', getU64Encoder()],
+      ['ownerSignature', getArrayEncoder(getU8Encoder(), { size: 64 })],
     ]),
     (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR })
   );
@@ -203,6 +209,8 @@ export function getStakeInstructionDataDecoder(): FixedSizeDecoder<StakeInstruct
     ['authorizedReaderNonce', getU128Decoder()],
     ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['stateNonce', getU128Decoder()],
+    ['signatureExpiryTimestamp', getU64Decoder()],
+    ['ownerSignature', getArrayDecoder(getU8Decoder(), { size: 64 })],
   ]);
 }
 
@@ -247,11 +255,6 @@ export type StakeAsyncInput<
    */
   stakeDelegate?: Address<TAccountStakeDelegate>;
   stakeDelegateAta?: Address<TAccountStakeDelegateAta>;
-  /**
-   * Market's ATA holds staked tokens *and* uncollected fees. Fees are
-   * tracked logically via `market.collected_fees`; physically they sit
-   * in this same ATA until claimed.
-   */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
@@ -273,6 +276,8 @@ export type StakeAsyncInput<
   authorizedReaderNonce: StakeInstructionDataArgs['authorizedReaderNonce'];
   userPubkey: StakeInstructionDataArgs['userPubkey'];
   stateNonce: StakeInstructionDataArgs['stateNonce'];
+  signatureExpiryTimestamp: StakeInstructionDataArgs['signatureExpiryTimestamp'];
+  ownerSignature: StakeInstructionDataArgs['ownerSignature'];
 };
 
 export async function getStakeInstructionAsync<
@@ -531,11 +536,6 @@ export type StakeInput<
    */
   stakeDelegate: Address<TAccountStakeDelegate>;
   stakeDelegateAta: Address<TAccountStakeDelegateAta>;
-  /**
-   * Market's ATA holds staked tokens *and* uncollected fees. Fees are
-   * tracked logically via `market.collected_fees`; physically they sit
-   * in this same ATA until claimed.
-   */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
@@ -557,6 +557,8 @@ export type StakeInput<
   authorizedReaderNonce: StakeInstructionDataArgs['authorizedReaderNonce'];
   userPubkey: StakeInstructionDataArgs['userPubkey'];
   stateNonce: StakeInstructionDataArgs['stateNonce'];
+  signatureExpiryTimestamp: StakeInstructionDataArgs['signatureExpiryTimestamp'];
+  ownerSignature: StakeInstructionDataArgs['ownerSignature'];
 };
 
 export function getStakeInstruction<
@@ -750,11 +752,6 @@ export type ParsedStakeInstruction<
      */
     stakeDelegate: TAccountMetas[4];
     stakeDelegateAta: TAccountMetas[5];
-    /**
-     * Market's ATA holds staked tokens *and* uncollected fees. Fees are
-     * tracked logically via `market.collected_fees`; physically they sit
-     * in this same ATA until claimed.
-     */
     marketTokenAta: TAccountMetas[6];
     tokenProgram: TAccountMetas[7];
     signPdaAccount: TAccountMetas[8];

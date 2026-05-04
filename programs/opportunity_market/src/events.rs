@@ -244,3 +244,12 @@ pub struct StakeDelegateInitializedEvent {
     pub authority: Pubkey,
     pub timestamp: i64,
 }
+
+#[event]
+pub struct StakeDelegateClosedEvent {
+    pub stake_delegate: Pubkey,
+    pub stake_account: Pubkey,
+    pub owner: Pubkey,
+    pub withdrawn_amount: u64,
+    pub timestamp: i64,
+}

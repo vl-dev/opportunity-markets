@@ -12,6 +12,7 @@ export * from "./endRevealPeriod";
 export * from "./addReward";
 export * from "./initStakeAccount";
 export * from "./initStakeDelegate";
+export * from "./withdrawStakeDelegate";
 export * from "./closeStakeAccount";
 export * from "./closeStuckStakeAccount";
 export * from "./reclaimStake";

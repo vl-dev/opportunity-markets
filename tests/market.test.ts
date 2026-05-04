@@ -577,8 +577,14 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    // Market ATA should be empty (or nearly empty due to rounding)
-    expect(marketBalanceAfter <= 1n, `Market ATA should be empty, has ${marketBalanceAfter}`).to.be.true;
+    // After all reclaims + reward payouts the market ATA should hold only the
+    // uncollected protocol fees (which sit in the market ATA until claim_fees).
+    const marketState = await runner.fetchMarket();
+    const collectedFees = marketState.data.collectedFees;
+    expect(
+      marketBalanceAfter <= collectedFees + 1n,
+      `Market ATA should hold only collected fees (~${collectedFees}), has ${marketBalanceAfter}`
+    ).to.be.true;
   });
 
   it("prevents closing market early when not allowed", async () => {

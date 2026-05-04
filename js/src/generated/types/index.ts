@@ -35,6 +35,7 @@ export * from './rewardAddedEvent';
 export * from './rewardClaimedEvent';
 export * from './rewardWithdrawnEvent';
 export * from './stakeAccountInitializedEvent';
+export * from './stakeDelegateClosedEvent';
 export * from './stakeDelegateInitializedEvent';
 export * from './stakedEvent';
 export * from './stakeOutput';

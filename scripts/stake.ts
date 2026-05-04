@@ -20,7 +20,7 @@ import { getMXEPublicKey } from "@arcium-hq/client";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
-  stake,
+  stakeAsOwner,
   initStakeAccount,
   initStakeDelegate,
   getStakeAccountAddress,
@@ -241,7 +241,7 @@ async function main() {
   const computationOffset = randomComputationOffset();
 
   console.log(`\nStaking ${amount} tokens on option ${optionId}...`);
-  const stakeIx = await stake(
+  const stakeIx = await stakeAsOwner(
     {
       payer,
       market: marketAddress,

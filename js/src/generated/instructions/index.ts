@@ -38,3 +38,4 @@ export * from './stakeCompDef';
 export * from './unstakeEarly';
 export * from './updateCentralState';
 export * from './withdrawReward';
+export * from './withdrawStakeDelegate';
