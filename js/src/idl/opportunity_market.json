@@ -21,9 +21,12 @@
       ],
       "accounts": [
         {
-          "name": "creator",
+          "name": "market_authority",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -1095,9 +1098,7 @@
         },
         {
           "name": "market_authority",
-          "type": {
-            "option": "pubkey"
-          }
+          "type": "pubkey"
         },
         {
           "name": "unstake_delay_seconds",
@@ -1853,8 +1854,11 @@
       ],
       "accounts": [
         {
-          "name": "authority",
-          "signer": true
+          "name": "market_authority",
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -2235,8 +2239,11 @@
       ],
       "accounts": [
         {
-          "name": "authority",
-          "signer": true
+          "name": "market_authority",
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -2509,8 +2516,11 @@
       ],
       "accounts": [
         {
-          "name": "authority",
-          "signer": true
+          "name": "market_authority",
+          "signer": true,
+          "relations": [
+            "market"
+          ]
         },
         {
           "name": "market",
@@ -4536,9 +4546,7 @@
           },
           {
             "name": "market_authority",
-            "type": {
-              "option": "pubkey"
-            }
+            "type": "pubkey"
           },
           {
             "name": "authorized_reader_pubkey",
@@ -4602,7 +4610,7 @@
             "type": "pubkey"
           },
           {
-            "name": "creator",
+            "name": "market_authority",
             "type": "pubkey"
           },
           {
@@ -5903,7 +5911,7 @@
             "type": "pubkey"
           },
           {
-            "name": "authority",
+            "name": "market_authority",
             "type": "pubkey"
           },
           {

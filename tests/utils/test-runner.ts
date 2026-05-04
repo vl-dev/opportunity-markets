@@ -387,7 +387,7 @@ export class TestRunner {
       marketIndex,
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
-      marketAuthority: null,
+      marketAuthority: runner.marketCreator.solanaKeypair.address,
       unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
       allowClosingEarly: marketConfig.allowClosingEarly,
@@ -512,7 +512,7 @@ export class TestRunner {
 
   async selectWinningOptions(selections: Array<{ optionId: number; rewardPercentage: number }>): Promise<void> {
     const ix = selectWinningOptionsIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       selections,
     });
@@ -575,7 +575,7 @@ export class TestRunner {
 
   async pauseMarket(): Promise<void> {
     const ix = pauseMarketIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
@@ -586,7 +586,7 @@ export class TestRunner {
 
   async resumeMarket(): Promise<void> {
     const ix = resumeMarketIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
@@ -607,7 +607,7 @@ export class TestRunner {
     this.usedOptionIds.add(optionId);
 
     const addOptionIx = await addMarketOption({
-      creator: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
     });
