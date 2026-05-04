@@ -52,7 +52,7 @@ pub fn create_market(
     market_index: u64,
     time_to_stake: u64,
     time_to_reveal: u64,
-    market_authority: Option<Pubkey>,
+    market_authority: Pubkey,
     unstake_delay_seconds: u64,
     authorized_reader_pubkey: [u8; 32],
     allow_closing_early: bool,
@@ -71,19 +71,15 @@ pub fn create_market(
     market.bump = ctx.bumps.market;
     market.creator = creator_key;
     market.index = market_index;
-    market.total_options = 0;
     market.time_to_stake = time_to_stake;
     market.time_to_reveal = time_to_reveal;
-    market.selected_options = None;
-    market.reward_amount = 0;
     market.mint = mint;
-    market.market_authority = market_authority.unwrap_or(creator_key);
+    market.market_authority = market_authority;
     market.reveal_period_authority = reveal_period_authority;
     market.earliness_cutoff_seconds = earliness_cutoff_seconds;
     market.unstake_delay_seconds = unstake_delay_seconds;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
-    market.paused = false;
     market.protocol_fee_bp = protocol_fee_bp;
 
     emit_ts!(MarketCreatedEvent {
@@ -92,7 +88,7 @@ pub fn create_market(
         index: market_index,
         mint: mint,
         time_to_reveal: time_to_reveal,
-        time_to_stake : time_to_stake,
+        time_to_stake: time_to_stake,
         market_authority: market_authority,
         authorized_reader_pubkey: authorized_reader_pubkey,
         unstake_delay_seconds: unstake_delay_seconds,
