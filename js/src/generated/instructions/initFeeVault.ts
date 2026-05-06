@@ -16,8 +16,6 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -37,32 +35,29 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
-  expectSome,
   getAccountMetaFactory,
   type ResolvedAccount,
 } from '../shared';
 
-export const CLOSE_STUCK_STAKE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
-  41, 239, 108, 203, 185, 230, 165, 181,
+export const INIT_FEE_VAULT_DISCRIMINATOR = new Uint8Array([
+  141, 17, 88, 209, 137, 84, 89, 235,
 ]);
 
-export function getCloseStuckStakeAccountDiscriminatorBytes() {
+export function getInitFeeVaultDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CLOSE_STUCK_STAKE_ACCOUNT_DISCRIMINATOR
+    INIT_FEE_VAULT_DISCRIMINATOR
   );
 }
 
-export type CloseStuckStakeAccountInstruction<
+export type InitFeeVaultInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountSigner extends string | AccountMeta<string> = string,
-  TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountStakeAccount extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
-  TAccountSignerTokenAccount extends string | AccountMeta<string> = string,
   TAccountFeeVault extends string | AccountMeta<string> = string,
   TAccountFeeVaultAta extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -70,25 +65,13 @@ export type CloseStuckStakeAccountInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountSigner extends string
-        ? WritableSignerAccount<TAccountSigner> &
-            AccountSignerMeta<TAccountSigner>
-        : TAccountSigner,
-      TAccountMarket extends string
-        ? ReadonlyAccount<TAccountMarket>
-        : TAccountMarket,
-      TAccountStakeAccount extends string
-        ? WritableAccount<TAccountStakeAccount>
-        : TAccountStakeAccount,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            AccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountMarketTokenAta extends string
-        ? WritableAccount<TAccountMarketTokenAta>
-        : TAccountMarketTokenAta,
-      TAccountSignerTokenAccount extends string
-        ? WritableAccount<TAccountSignerTokenAccount>
-        : TAccountSignerTokenAccount,
       TAccountFeeVault extends string
         ? WritableAccount<TAccountFeeVault>
         : TAccountFeeVault,
@@ -98,6 +81,9 @@ export type CloseStuckStakeAccountInstruction<
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -105,109 +91,80 @@ export type CloseStuckStakeAccountInstruction<
     ]
   >;
 
-export type CloseStuckStakeAccountInstructionData = {
-  discriminator: ReadonlyUint8Array;
-  stakeAccountId: number;
-};
+export type InitFeeVaultInstructionData = { discriminator: ReadonlyUint8Array };
 
-export type CloseStuckStakeAccountInstructionDataArgs = {
-  stakeAccountId: number;
-};
+export type InitFeeVaultInstructionDataArgs = {};
 
-export function getCloseStuckStakeAccountInstructionDataEncoder(): FixedSizeEncoder<CloseStuckStakeAccountInstructionDataArgs> {
+export function getInitFeeVaultInstructionDataEncoder(): FixedSizeEncoder<InitFeeVaultInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['stakeAccountId', getU32Encoder()],
-    ]),
-    (value) => ({
-      ...value,
-      discriminator: CLOSE_STUCK_STAKE_ACCOUNT_DISCRIMINATOR,
-    })
+    getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
+    (value) => ({ ...value, discriminator: INIT_FEE_VAULT_DISCRIMINATOR })
   );
 }
 
-export function getCloseStuckStakeAccountInstructionDataDecoder(): FixedSizeDecoder<CloseStuckStakeAccountInstructionData> {
+export function getInitFeeVaultInstructionDataDecoder(): FixedSizeDecoder<InitFeeVaultInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['stakeAccountId', getU32Decoder()],
   ]);
 }
 
-export function getCloseStuckStakeAccountInstructionDataCodec(): FixedSizeCodec<
-  CloseStuckStakeAccountInstructionDataArgs,
-  CloseStuckStakeAccountInstructionData
+export function getInitFeeVaultInstructionDataCodec(): FixedSizeCodec<
+  InitFeeVaultInstructionDataArgs,
+  InitFeeVaultInstructionData
 > {
   return combineCodec(
-    getCloseStuckStakeAccountInstructionDataEncoder(),
-    getCloseStuckStakeAccountInstructionDataDecoder()
+    getInitFeeVaultInstructionDataEncoder(),
+    getInitFeeVaultInstructionDataDecoder()
   );
 }
 
-export type CloseStuckStakeAccountAsyncInput<
-  TAccountSigner extends string = string,
-  TAccountMarket extends string = string,
-  TAccountStakeAccount extends string = string,
+export type InitFeeVaultAsyncInput<
+  TAccountPayer extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
-  TAccountSignerTokenAccount extends string = string,
   TAccountFeeVault extends string = string,
   TAccountFeeVaultAta extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  signer: TransactionSigner<TAccountSigner>;
-  market: Address<TAccountMarket>;
-  stakeAccount?: Address<TAccountStakeAccount>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenMint: Address<TAccountTokenMint>;
-  marketTokenAta?: Address<TAccountMarketTokenAta>;
-  /** Signer's token account to receive refund */
-  signerTokenAccount: Address<TAccountSignerTokenAccount>;
   feeVault?: Address<TAccountFeeVault>;
   feeVaultAta?: Address<TAccountFeeVaultAta>;
   tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stakeAccountId: CloseStuckStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
-export async function getCloseStuckStakeAccountInstructionAsync<
-  TAccountSigner extends string,
-  TAccountMarket extends string,
-  TAccountStakeAccount extends string,
+export async function getInitFeeVaultInstructionAsync<
+  TAccountPayer extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
-  TAccountSignerTokenAccount extends string,
   TAccountFeeVault extends string,
   TAccountFeeVaultAta extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CloseStuckStakeAccountAsyncInput<
-    TAccountSigner,
-    TAccountMarket,
-    TAccountStakeAccount,
+  input: InitFeeVaultAsyncInput<
+    TAccountPayer,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
-    TAccountSignerTokenAccount,
     TAccountFeeVault,
     TAccountFeeVaultAta,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  CloseStuckStakeAccountInstruction<
+  InitFeeVaultInstruction<
     TProgramAddress,
-    TAccountSigner,
-    TAccountMarket,
-    TAccountStakeAccount,
+    TAccountPayer,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
-    TAccountSignerTokenAccount,
     TAccountFeeVault,
     TAccountFeeVaultAta,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >
 > {
@@ -217,18 +174,15 @@ export async function getCloseStuckStakeAccountInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
-    market: { value: input.market ?? null, isWritable: false },
-    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
-    signerTokenAccount: {
-      value: input.signerTokenAccount ?? null,
-      isWritable: true,
-    },
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -236,36 +190,7 @@ export async function getCloseStuckStakeAccountInstructionAsync<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
-  if (!accounts.stakeAccount.value) {
-    accounts.stakeAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.stakeAccountId)),
-      ],
-    });
-  }
-  if (!accounts.marketTokenAta.value) {
-    accounts.marketTokenAta.value = await getProgramDerivedAddress({
-      programAddress:
-        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
-      seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-      ],
-    });
-  }
   if (!accounts.feeVault.value) {
     accounts.feeVault.value = await getProgramDerivedAddress({
       programAddress,
@@ -288,6 +213,10 @@ export async function getCloseStuckStakeAccountInstructionAsync<
       ],
     });
   }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -296,99 +225,74 @@ export async function getCloseStuckStakeAccountInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.market),
-      getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
-      getAccountMeta(accounts.signerTokenAccount),
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.feeVaultAta),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getCloseStuckStakeAccountInstructionDataEncoder().encode(
-      args as CloseStuckStakeAccountInstructionDataArgs
-    ),
+    data: getInitFeeVaultInstructionDataEncoder().encode({}),
     programAddress,
-  } as CloseStuckStakeAccountInstruction<
+  } as InitFeeVaultInstruction<
     TProgramAddress,
-    TAccountSigner,
-    TAccountMarket,
-    TAccountStakeAccount,
+    TAccountPayer,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
-    TAccountSignerTokenAccount,
     TAccountFeeVault,
     TAccountFeeVaultAta,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
 
-export type CloseStuckStakeAccountInput<
-  TAccountSigner extends string = string,
-  TAccountMarket extends string = string,
-  TAccountStakeAccount extends string = string,
+export type InitFeeVaultInput<
+  TAccountPayer extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
-  TAccountSignerTokenAccount extends string = string,
   TAccountFeeVault extends string = string,
   TAccountFeeVaultAta extends string = string,
   TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  signer: TransactionSigner<TAccountSigner>;
-  market: Address<TAccountMarket>;
-  stakeAccount: Address<TAccountStakeAccount>;
+  payer: TransactionSigner<TAccountPayer>;
   tokenMint: Address<TAccountTokenMint>;
-  marketTokenAta: Address<TAccountMarketTokenAta>;
-  /** Signer's token account to receive refund */
-  signerTokenAccount: Address<TAccountSignerTokenAccount>;
   feeVault: Address<TAccountFeeVault>;
   feeVaultAta: Address<TAccountFeeVaultAta>;
   tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stakeAccountId: CloseStuckStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
-export function getCloseStuckStakeAccountInstruction<
-  TAccountSigner extends string,
-  TAccountMarket extends string,
-  TAccountStakeAccount extends string,
+export function getInitFeeVaultInstruction<
+  TAccountPayer extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
-  TAccountSignerTokenAccount extends string,
   TAccountFeeVault extends string,
   TAccountFeeVaultAta extends string,
   TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CloseStuckStakeAccountInput<
-    TAccountSigner,
-    TAccountMarket,
-    TAccountStakeAccount,
+  input: InitFeeVaultInput<
+    TAccountPayer,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
-    TAccountSignerTokenAccount,
     TAccountFeeVault,
     TAccountFeeVaultAta,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): CloseStuckStakeAccountInstruction<
+): InitFeeVaultInstruction<
   TProgramAddress,
-  TAccountSigner,
-  TAccountMarket,
-  TAccountStakeAccount,
+  TAccountPayer,
   TAccountTokenMint,
-  TAccountMarketTokenAta,
-  TAccountSignerTokenAccount,
   TAccountFeeVault,
   TAccountFeeVaultAta,
   TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountSystemProgram
 > {
   // Program address.
@@ -397,18 +301,15 @@ export function getCloseStuckStakeAccountInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
-    market: { value: input.market ?? null, isWritable: false },
-    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
-    signerTokenAccount: {
-      value: input.signerTokenAccount ?? null,
-      isWritable: true,
-    },
     feeVault: { value: input.feeVault ?? null, isWritable: true },
     feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -416,10 +317,11 @@ export function getCloseStuckStakeAccountInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -428,66 +330,54 @@ export function getCloseStuckStakeAccountInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.market),
-      getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
-      getAccountMeta(accounts.signerTokenAccount),
       getAccountMeta(accounts.feeVault),
       getAccountMeta(accounts.feeVaultAta),
       getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getCloseStuckStakeAccountInstructionDataEncoder().encode(
-      args as CloseStuckStakeAccountInstructionDataArgs
-    ),
+    data: getInitFeeVaultInstructionDataEncoder().encode({}),
     programAddress,
-  } as CloseStuckStakeAccountInstruction<
+  } as InitFeeVaultInstruction<
     TProgramAddress,
-    TAccountSigner,
-    TAccountMarket,
-    TAccountStakeAccount,
+    TAccountPayer,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
-    TAccountSignerTokenAccount,
     TAccountFeeVault,
     TAccountFeeVaultAta,
     TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedCloseStuckStakeAccountInstruction<
+export type ParsedInitFeeVaultInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    signer: TAccountMetas[0];
-    market: TAccountMetas[1];
-    stakeAccount: TAccountMetas[2];
-    tokenMint: TAccountMetas[3];
-    marketTokenAta: TAccountMetas[4];
-    /** Signer's token account to receive refund */
-    signerTokenAccount: TAccountMetas[5];
-    feeVault: TAccountMetas[6];
-    feeVaultAta: TAccountMetas[7];
-    tokenProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    payer: TAccountMetas[0];
+    tokenMint: TAccountMetas[1];
+    feeVault: TAccountMetas[2];
+    feeVaultAta: TAccountMetas[3];
+    tokenProgram: TAccountMetas[4];
+    associatedTokenProgram: TAccountMetas[5];
+    systemProgram: TAccountMetas[6];
   };
-  data: CloseStuckStakeAccountInstructionData;
+  data: InitFeeVaultInstructionData;
 };
 
-export function parseCloseStuckStakeAccountInstruction<
+export function parseInitFeeVaultInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedCloseStuckStakeAccountInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+): ParsedInitFeeVaultInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -500,19 +390,14 @@ export function parseCloseStuckStakeAccountInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      signer: getNextAccount(),
-      market: getNextAccount(),
-      stakeAccount: getNextAccount(),
+      payer: getNextAccount(),
       tokenMint: getNextAccount(),
-      marketTokenAta: getNextAccount(),
-      signerTokenAccount: getNextAccount(),
       feeVault: getNextAccount(),
       feeVaultAta: getNextAccount(),
       tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getCloseStuckStakeAccountInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getInitFeeVaultInstructionDataDecoder().decode(instruction.data),
   };
 }

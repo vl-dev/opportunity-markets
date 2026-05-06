@@ -179,10 +179,17 @@ pub struct StakeAccountInitializedEvent {
 
 #[event]
 pub struct FeesClaimedEvent {
-    pub market: Pubkey,
+    pub fee_vault: Pubkey,
     pub mint: Pubkey,
     pub destination: Pubkey,
     pub amount: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct FeeVaultInitializedEvent {
+    pub fee_vault: Pubkey,
+    pub mint: Pubkey,
     pub timestamp: i64,
 }
 
@@ -237,20 +244,3 @@ pub struct AccountChangeCancelledEvent {
     pub timestamp: i64,
 }
 
-#[event]
-pub struct StakeDelegateInitializedEvent {
-    pub stake_delegate: Pubkey,
-    pub stake_account: Pubkey,
-    pub owner: Pubkey,
-    pub authority: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct StakeDelegateClosedEvent {
-    pub stake_delegate: Pubkey,
-    pub stake_account: Pubkey,
-    pub owner: Pubkey,
-    pub withdrawn_amount: u64,
-    pub timestamp: i64,
-}

@@ -73,11 +73,6 @@ pub struct OpportunityMarket {
     // Snapshot of central state fee taken when market is created.
     pub protocol_fee_bp: u16,
 
-    // Cumulative protocol fees collected from successful stakes. Tokens
-    // physically sit in `market_token_ata`; this counter tracks how much of
-    // that balance is fee-claimable (vs. user-stake-claimable).
-    pub collected_fees: u64,
-
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
 }
@@ -110,13 +105,13 @@ pub struct StakeAccount {
 
 #[account]
 #[derive(InitSpace)]
-pub struct StakeDelegate {
+pub struct FeeVault {
     pub bump: u8,
+    pub mint: Pubkey,
+    pub collected_fees: u64,
 
-    pub stake_account: Pubkey,
-
-    // Party authorized to stake using this delegate and the bound stake account.
-    pub authority: Pubkey,
+    /// Reserved for future use
+    pub _reserved: [u8; 128],
 }
 
 #[account]

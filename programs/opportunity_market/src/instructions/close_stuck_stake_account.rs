@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StuckStakeClosedEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
-use crate::state::{OpportunityMarket, StakeAccount};
+use crate::constants::{FEE_VAULT_SEED, OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
+use crate::state::{FeeVault, OpportunityMarket, StakeAccount};
 
 #[derive(Accounts)]
 #[instruction(stake_account_id: u32)]
@@ -45,6 +45,22 @@ pub struct CloseStuckStakeAccount<'info> {
     )]
     pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        mut,
+        seeds = [FEE_VAULT_SEED, token_mint.key().as_ref()],
+        bump = fee_vault.bump,
+        constraint = fee_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub fee_vault: Box<Account<'info, FeeVault>>,
+
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = fee_vault,
+        associated_token::token_program = token_program,
+    )]
+    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
@@ -61,9 +77,9 @@ pub fn close_stuck_stake_account(
     let market = &ctx.accounts.market;
     let amount = stake_account.amount;
     let fee = stake_account.fee;
-    let total_refund = amount.checked_add(fee).ok_or(ErrorCode::Overflow)?;
 
-    if total_refund > 0 {
+    // Refund net amount from market ATA.
+    if amount > 0 {
         let creator_key = market.creator;
         let index_bytes = market.index.to_le_bytes();
         let bump = market.bump;
@@ -85,7 +101,34 @@ pub fn close_stuck_stake_account(
                 },
                 market_seeds,
             ),
-            total_refund,
+            amount,
+            ctx.accounts.token_mint.decimals,
+        )?;
+    }
+
+    // Refund fee from vault ATA. The failed stake never incremented
+    // `fee_vault.collected_fees` (callback never ran), so no counter update.
+    if fee > 0 {
+        let vault_bump = ctx.accounts.fee_vault.bump;
+        let mint_key = ctx.accounts.token_mint.key();
+        let vault_seeds: &[&[&[u8]]] = &[&[
+            FEE_VAULT_SEED,
+            mint_key.as_ref(),
+            &[vault_bump],
+        ]];
+
+        transfer_checked(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.fee_vault_ata.to_account_info(),
+                    mint: ctx.accounts.token_mint.to_account_info(),
+                    to: ctx.accounts.signer_token_account.to_account_info(),
+                    authority: ctx.accounts.fee_vault.to_account_info(),
+                },
+                vault_seeds,
+            ),
+            fee,
             ctx.accounts.token_mint.decimals,
         )?;
     }

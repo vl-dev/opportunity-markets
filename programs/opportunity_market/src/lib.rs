@@ -173,17 +173,8 @@ pub mod opportunity_market {
         instructions::init_stake_account(ctx, stake_account_id)
     }
 
-    pub fn init_stake_delegate(
-        ctx: Context<InitStakeDelegate>,
-        authority: Option<Pubkey>,
-    ) -> Result<()> {
-        instructions::init_stake_delegate(ctx, authority)
-    }
-
-    pub fn withdraw_stake_delegate(
-        ctx: Context<WithdrawStakeDelegate>,
-    ) -> Result<()> {
-        instructions::withdraw_stake_delegate(ctx)
+    pub fn init_fee_vault(ctx: Context<InitFeeVault>) -> Result<()> {
+        instructions::init_fee_vault(ctx)
     }
 
     pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
@@ -200,8 +191,6 @@ pub mod opportunity_market {
         authorized_reader_nonce: u128,
         user_pubkey: [u8; 32],
         state_nonce: u128,
-        signature_expiry_timestamp: u64,
-        owner_signature: [u8; 64],
     ) -> Result<()> {
         instructions::stake(
             ctx,
@@ -213,8 +202,6 @@ pub mod opportunity_market {
             authorized_reader_nonce,
             user_pubkey,
             state_nonce,
-            signature_expiry_timestamp,
-            owner_signature,
         )
     }
 

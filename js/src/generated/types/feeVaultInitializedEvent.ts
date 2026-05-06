@@ -14,56 +14,46 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type FeesClaimedEvent = {
+export type FeeVaultInitializedEvent = {
   feeVault: Address;
   mint: Address;
-  destination: Address;
-  amount: bigint;
   timestamp: bigint;
 };
 
-export type FeesClaimedEventArgs = {
+export type FeeVaultInitializedEventArgs = {
   feeVault: Address;
   mint: Address;
-  destination: Address;
-  amount: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getFeesClaimedEventEncoder(): FixedSizeEncoder<FeesClaimedEventArgs> {
+export function getFeeVaultInitializedEventEncoder(): FixedSizeEncoder<FeeVaultInitializedEventArgs> {
   return getStructEncoder([
     ['feeVault', getAddressEncoder()],
     ['mint', getAddressEncoder()],
-    ['destination', getAddressEncoder()],
-    ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getFeesClaimedEventDecoder(): FixedSizeDecoder<FeesClaimedEvent> {
+export function getFeeVaultInitializedEventDecoder(): FixedSizeDecoder<FeeVaultInitializedEvent> {
   return getStructDecoder([
     ['feeVault', getAddressDecoder()],
     ['mint', getAddressDecoder()],
-    ['destination', getAddressDecoder()],
-    ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getFeesClaimedEventCodec(): FixedSizeCodec<
-  FeesClaimedEventArgs,
-  FeesClaimedEvent
+export function getFeeVaultInitializedEventCodec(): FixedSizeCodec<
+  FeeVaultInitializedEventArgs,
+  FeeVaultInitializedEvent
 > {
   return combineCodec(
-    getFeesClaimedEventEncoder(),
-    getFeesClaimedEventDecoder()
+    getFeeVaultInitializedEventEncoder(),
+    getFeeVaultInitializedEventDecoder()
   );
 }

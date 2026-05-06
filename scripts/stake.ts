@@ -20,17 +20,14 @@ import { getMXEPublicKey } from "@arcium-hq/client";
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
-  stakeAsOwner,
+  stake,
   initStakeAccount,
-  initStakeDelegate,
   getStakeAccountAddress,
-  getStakeDelegateAddress,
   fetchOpportunityMarket,
   randomComputationOffset,
   createCipher,
   generateX25519Keypair,
 } from "../js/src";
-import { getTransferInstruction } from "@solana-program/token";
 import { randomBytes } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
@@ -144,11 +141,6 @@ async function main() {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
   console.log(`Signer ATA: ${signerTokenAccount}`);
-  const [marketTokenAta] = await findAssociatedTokenPda({
-    mint: tokenMint,
-    owner: marketAddress,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
 
   // Ensure staker's associated token account exists
   const signerAtaAccount = await rpc.getAccountInfo(signerTokenAccount, { encoding: "base64" }).send();
@@ -198,41 +190,7 @@ async function main() {
   const initSig = await sendAndConfirmTx(rpc, signedInitTx);
   console.log(`Init stake account sig: ${initSig}`);
 
-  // Init stake delegate + fund its ATA
   const [stakeAccountAddress] = await getStakeAccountAddress(payer.address, marketAddress, stakeAccountId, PROGRAM_ID);
-  const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, PROGRAM_ID);
-  const [stakeDelegateAta] = await findAssociatedTokenPda({
-    mint: tokenMint,
-    owner: stakeDelegateAddress,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-
-  const initDelegateIx = await initStakeDelegate({
-    owner: payer,
-    stakeAccount: stakeAccountAddress,
-    market: marketAddress,
-    mint: tokenMint,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    authority: null,
-    programAddress: PROGRAM_ID,
-  });
-  const fundDelegateIx = getTransferInstruction({
-    source: signerTokenAccount,
-    destination: stakeDelegateAta,
-    authority: payer,
-    amount,
-  });
-  const { value: latestBlockhashDelegate } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
-  const signedDelegateTx = await signTransactionMessageWithSigners(
-    pipe(
-      createTransactionMessage({ version: 0 }),
-      (msg) => setTransactionMessageFeePayer(payer.address, msg),
-      (msg) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhashDelegate, msg),
-      (msg) => appendTransactionMessageInstructions([initDelegateIx as Instruction, fundDelegateIx as Instruction], msg)
-    )
-  );
-  await sendAndConfirmTx(rpc, signedDelegateTx);
-  console.log(`Init + fund stake delegate done`);
 
   // Encrypt option choice
   const cipher = createCipher(userX25519Keypair.secretKey, mxePublicKey);
@@ -241,14 +199,15 @@ async function main() {
   const computationOffset = randomComputationOffset();
 
   console.log(`\nStaking ${amount} tokens on option ${optionId}...`);
-  const stakeIx = await stakeAsOwner(
+  const stakeIx = await stake(
     {
+      signer: payer,
       payer,
       market: marketAddress,
       stakeAccount: stakeAccountAddress,
       stakeAccountId,
       tokenMint,
-      marketTokenAta,
+      signerTokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       amount,
       selectedOptionCiphertext: optionCiphertext[0],

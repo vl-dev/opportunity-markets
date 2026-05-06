@@ -66,8 +66,8 @@ export type StakeCallbackInstruction<
   TAccountClusterAccount extends string | AccountMeta<string> = string,
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
-  TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
+  TAccountFeeVault extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -91,12 +91,12 @@ export type StakeCallbackInstruction<
       TAccountInstructionsSysvar extends string
         ? ReadonlyAccount<TAccountInstructionsSysvar>
         : TAccountInstructionsSysvar,
-      TAccountMarket extends string
-        ? WritableAccount<TAccountMarket>
-        : TAccountMarket,
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
+      TAccountFeeVault extends string
+        ? WritableAccount<TAccountFeeVault>
+        : TAccountFeeVault,
       ...TRemainingAccounts,
     ]
   >;
@@ -202,8 +202,8 @@ export type StakeCallbackInput<
   TAccountComputationAccount extends string = string,
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
-  TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
+  TAccountFeeVault extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -211,8 +211,8 @@ export type StakeCallbackInput<
   computationAccount: Address<TAccountComputationAccount>;
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
-  market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
+  feeVault: Address<TAccountFeeVault>;
   output: StakeCallbackInstructionDataArgs['output'];
 };
 
@@ -223,8 +223,8 @@ export function getStakeCallbackInstruction<
   TAccountComputationAccount extends string,
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
-  TAccountMarket extends string,
   TAccountStakeAccount extends string,
+  TAccountFeeVault extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: StakeCallbackInput<
@@ -234,8 +234,8 @@ export function getStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountMarket,
-    TAccountStakeAccount
+    TAccountStakeAccount,
+    TAccountFeeVault
   >,
   config?: { programAddress?: TProgramAddress }
 ): StakeCallbackInstruction<
@@ -246,8 +246,8 @@ export function getStakeCallbackInstruction<
   TAccountComputationAccount,
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
-  TAccountMarket,
-  TAccountStakeAccount
+  TAccountStakeAccount,
+  TAccountFeeVault
 > {
   // Program address.
   const programAddress =
@@ -267,8 +267,8 @@ export function getStakeCallbackInstruction<
       value: input.instructionsSysvar ?? null,
       isWritable: false,
     },
-    market: { value: input.market ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    feeVault: { value: input.feeVault ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -297,8 +297,8 @@ export function getStakeCallbackInstruction<
       getAccountMeta(accounts.computationAccount),
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
-      getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.feeVault),
     ],
     data: getStakeCallbackInstructionDataEncoder().encode(
       args as StakeCallbackInstructionDataArgs
@@ -312,8 +312,8 @@ export function getStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountMarket,
-    TAccountStakeAccount
+    TAccountStakeAccount,
+    TAccountFeeVault
   >);
 }
 
@@ -329,8 +329,8 @@ export type ParsedStakeCallbackInstruction<
     computationAccount: TAccountMetas[3];
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
-    market: TAccountMetas[6];
-    stakeAccount: TAccountMetas[7];
+    stakeAccount: TAccountMetas[6];
+    feeVault: TAccountMetas[7];
   };
   data: StakeCallbackInstructionData;
 };
@@ -362,8 +362,8 @@ export function parseStakeCallbackInstruction<
       computationAccount: getNextAccount(),
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
-      market: getNextAccount(),
       stakeAccount: getNextAccount(),
+      feeVault: getNextAccount(),
     },
     data: getStakeCallbackInstructionDataDecoder().decode(instruction.data),
   };

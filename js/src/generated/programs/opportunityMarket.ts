@@ -30,8 +30,8 @@ import {
   type ParsedFinalizeNewUpdateAuthorityInstruction,
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
+  type ParsedInitFeeVaultInstruction,
   type ParsedInitStakeAccountInstruction,
-  type ParsedInitStakeDelegateInstruction,
   type ParsedOpenMarketInstruction,
   type ParsedPauseMarketInstruction,
   type ParsedProposeNewFeeClaimerInstruction,
@@ -48,7 +48,6 @@ import {
   type ParsedUnstakeEarlyInstruction,
   type ParsedUpdateCentralStateInstruction,
   type ParsedWithdrawRewardInstruction,
-  type ParsedWithdrawStakeDelegateInstruction,
 } from '../instructions';
 
 export const OPPORTUNITY_MARKET_PROGRAM_ADDRESS =
@@ -62,12 +61,12 @@ export enum OpportunityMarketAccount {
   Cluster,
   ComputationDefinitionAccount,
   FeePool,
+  FeeVault,
   MXEAccount,
   OpportunityMarket,
   OpportunityMarketOption,
   OpportunityMarketSponsor,
   StakeAccount,
-  StakeDelegate,
   TimelockedAccountChange,
 }
 
@@ -156,6 +155,17 @@ export function identifyOpportunityMarketAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([192, 178, 69, 232, 58, 149, 157, 132])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketAccount.FeeVault;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([103, 26, 85, 250, 179, 159, 17, 117])
       ),
       0
@@ -211,17 +221,6 @@ export function identifyOpportunityMarketAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([212, 10, 35, 97, 66, 60, 169, 214])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.StakeDelegate;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([212, 170, 131, 144, 16, 51, 205, 22])
       ),
       0
@@ -251,8 +250,8 @@ export enum OpportunityMarketInstruction {
   FinalizeNewUpdateAuthority,
   IncrementOptionTally,
   InitCentralState,
+  InitFeeVault,
   InitStakeAccount,
-  InitStakeDelegate,
   OpenMarket,
   PauseMarket,
   ProposeNewFeeClaimer,
@@ -269,7 +268,6 @@ export enum OpportunityMarketInstruction {
   UnstakeEarly,
   UpdateCentralState,
   WithdrawReward,
-  WithdrawStakeDelegate,
 }
 
 export function identifyOpportunityMarketInstruction(
@@ -456,23 +454,23 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([141, 17, 88, 209, 137, 84, 89, 235])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.InitFeeVault;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([132, 171, 255, 149, 163, 37, 220, 45])
       ),
       0
     )
   ) {
     return OpportunityMarketInstruction.InitStakeAccount;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([153, 134, 247, 50, 147, 198, 224, 251])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.InitStakeDelegate;
   }
   if (
     containsBytes(
@@ -650,17 +648,6 @@ export function identifyOpportunityMarketInstruction(
   ) {
     return OpportunityMarketInstruction.WithdrawReward;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([146, 167, 81, 107, 8, 5, 183, 53])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.WithdrawStakeDelegate;
-  }
   throw new Error(
     'The provided instruction could not be identified as a opportunityMarket instruction.'
   );
@@ -718,11 +705,11 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.InitCentralState;
     } & ParsedInitCentralStateInstruction<TProgram>)
   | ({
+      instructionType: OpportunityMarketInstruction.InitFeeVault;
+    } & ParsedInitFeeVaultInstruction<TProgram>)
+  | ({
       instructionType: OpportunityMarketInstruction.InitStakeAccount;
     } & ParsedInitStakeAccountInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.InitStakeDelegate;
-    } & ParsedInitStakeDelegateInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)
@@ -770,7 +757,4 @@ export type ParsedOpportunityMarketInstruction<
     } & ParsedUpdateCentralStateInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.WithdrawReward;
-    } & ParsedWithdrawRewardInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.WithdrawStakeDelegate;
-    } & ParsedWithdrawStakeDelegateInstruction<TProgram>);
+    } & ParsedWithdrawRewardInstruction<TProgram>);

@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, FeesClaimedEvent};
-use crate::constants::{CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED};
-use crate::state::{CentralState, OpportunityMarket};
+use crate::constants::{CENTRAL_STATE_SEED, FEE_VAULT_SEED};
+use crate::state::{CentralState, FeeVault};
 
 #[derive(Accounts)]
 pub struct ClaimFees<'info> {
@@ -23,20 +23,20 @@ pub struct ClaimFees<'info> {
 
     #[account(
         mut,
-        seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
-        bump = market.bump,
-        constraint = market.mint == token_mint.key() @ ErrorCode::InvalidMint,
-        constraint = market.collected_fees > 0 @ ErrorCode::NoFeesToClaim,
+        seeds = [FEE_VAULT_SEED, token_mint.key().as_ref()],
+        bump = fee_vault.bump,
+        constraint = fee_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+        constraint = fee_vault.collected_fees > 0 @ ErrorCode::NoFeesToClaim,
     )]
-    pub market: Box<Account<'info, OpportunityMarket>>,
+    pub fee_vault: Box<Account<'info, FeeVault>>,
 
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = market,
+        associated_token::authority = fee_vault,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -49,38 +49,35 @@ pub struct ClaimFees<'info> {
 }
 
 pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
-    let market = &ctx.accounts.market;
-    let fees = market.collected_fees;
+    let fees = ctx.accounts.fee_vault.collected_fees;
 
-    let creator_key = market.creator;
-    let index_bytes = market.index.to_le_bytes();
-    let bump = market.bump;
-    let market_seeds: &[&[&[u8]]] = &[&[
-        OPPORTUNITY_MARKET_SEED,
-        creator_key.as_ref(),
-        &index_bytes,
-        &[bump],
+    let vault_bump = ctx.accounts.fee_vault.bump;
+    let mint_key = ctx.accounts.token_mint.key();
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        FEE_VAULT_SEED,
+        mint_key.as_ref(),
+        &[vault_bump],
     ]];
 
     transfer_checked(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
-                from: ctx.accounts.market_token_ata.to_account_info(),
+                from: ctx.accounts.fee_vault_ata.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
                 to: ctx.accounts.destination_token_account.to_account_info(),
-                authority: market.to_account_info(),
+                authority: ctx.accounts.fee_vault.to_account_info(),
             },
-            market_seeds,
+            signer_seeds,
         ),
         fees,
         ctx.accounts.token_mint.decimals,
     )?;
 
-    ctx.accounts.market.collected_fees = 0;
+    ctx.accounts.fee_vault.collected_fees = 0;
 
     emit_ts!(FeesClaimedEvent {
-        market: ctx.accounts.market.key(),
+        fee_vault: ctx.accounts.fee_vault.key(),
         mint: ctx.accounts.token_mint.key(),
         destination: ctx.accounts.destination_token_account.key(),
         amount: fees,

@@ -4,12 +4,11 @@ use anchor_spl::token_interface::{
 };
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
-use brine_ed25519::sig_verify;
 
-use crate::constants::{STAKE_ACCOUNT_SEED, STAKE_DELEGATE_SEED};
+use crate::constants::{FEE_VAULT_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
-use crate::state::{OpportunityMarket, StakeAccount, StakeDelegate};
+use crate::state::{FeeVault, OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -17,6 +16,11 @@ use crate::{ID, ID_CONST, ArciumSignerAccount};
 #[derive(Accounts)]
 #[instruction(computation_offset: u64, stake_account_id: u32)]
 pub struct Stake<'info> {
+    #[account(
+        constraint = signer.key() == stake_account.owner @ ErrorCode::Unauthorized,
+    )]
+    pub signer: Signer<'info>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -41,22 +45,14 @@ pub struct Stake<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Stake delegate PDA bound to this specific stake_account.
-    #[account(
-        seeds = [STAKE_DELEGATE_SEED, stake_account.key().as_ref()],
-        bump = stake_delegate.bump,
-        constraint = stake_delegate.stake_account == stake_account.key() @ ErrorCode::Unauthorized,
-    )]
-    pub stake_delegate: Box<Account<'info, StakeDelegate>>,
-
     /// Funds the stake.
     #[account(
         mut,
-        associated_token::mint = token_mint,
-        associated_token::authority = stake_delegate,
-        associated_token::token_program = token_program,
+        token::mint = token_mint,
+        token::authority = signer,
+        token::token_program = token_program,
     )]
-    pub stake_delegate_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -65,6 +61,24 @@ pub struct Stake<'info> {
         associated_token::token_program = token_program,
     )]
     pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// Per-mint fee vault. Tracks `collected_fees` and owns `fee_vault_ata`.
+    #[account(
+        mut,
+        seeds = [FEE_VAULT_SEED, token_mint.key().as_ref()],
+        bump = fee_vault.bump,
+        constraint = fee_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub fee_vault: Box<Account<'info, FeeVault>>,
+
+    /// Receives the fee portion of every stake.
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = fee_vault,
+        associated_token::token_program = token_program,
+    )]
+    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -111,8 +125,6 @@ pub fn stake(
     authorized_reader_nonce: u128,
     user_pubkey: [u8; 32],
     state_nonce: u128,
-    signature_expiry_timestamp: u64,
-    owner_signature: [u8; 64],
 ) -> Result<()> {
     require!(amount > 0, ErrorCode::InsufficientBalance);
     require!(
@@ -133,7 +145,7 @@ pub fn stake(
         ErrorCode::StakingNotActive
     );
 
-    // Calculate fee
+    // Calculate fee from the market's snapshot of protocol_fee_bp (taken at create time).
     let fee = (amount as u128)
         .checked_mul(market.protocol_fee_bp as u128)
         .ok_or(ErrorCode::Overflow)?
@@ -143,66 +155,38 @@ pub fn stake(
         .checked_sub(fee)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Authorize the stake.
-    // - If `payer == stake_account.owner` we skip ed25519 verification.
-    // - Otherwise the payer must equal `stake_delegate.authority` AND the
-    //   stake_account.owner must have produced an ed25519 signature over the
-    //   canonical input message, time-limited via signature_expiry_timestamp.
-    let owner_key = ctx.accounts.stake_account.owner;
-    let payer_key = ctx.accounts.payer.key();
-
-    if owner_key != payer_key {
-        require!(
-            ctx.accounts.stake_delegate.authority == payer_key,
-            ErrorCode::Unauthorized
-        );
-
-        require!(
-            current_timestamp <= signature_expiry_timestamp,
-            ErrorCode::SignatureExpired
-        );
-
-        let stake_account_key = ctx.accounts.stake_account.key();
-        let mut msg = Vec::with_capacity(32 + 8 + 16 + 16 + 16 + 32 + 8 + 32);
-        msg.extend_from_slice(stake_account_key.as_ref());
-        msg.extend_from_slice(&net_amount.to_le_bytes());
-        msg.extend_from_slice(&state_nonce.to_le_bytes());
-        msg.extend_from_slice(&input_nonce.to_le_bytes());
-        msg.extend_from_slice(&authorized_reader_nonce.to_le_bytes());
-        msg.extend_from_slice(&selected_option_ciphertext);
-        msg.extend_from_slice(&signature_expiry_timestamp.to_le_bytes());
-        msg.extend_from_slice(&user_pubkey);
-
-        let owner_pk_bytes = owner_key.to_bytes();
-        sig_verify(&owner_pk_bytes, &owner_signature, &msg)
-            .map_err(|_| error!(ErrorCode::InvalidSignature))?;
-    }
-
-    // Transfer the full amount including fees to market ATA.
-    // Fees are tracked in market account.
-    // Stake is tracked in individual stake accounts.
-    let stake_account_key = ctx.accounts.stake_account.key();
-    let delegate_bump = ctx.accounts.stake_delegate.bump;
-    let delegate_seeds: &[&[&[u8]]] = &[&[
-        STAKE_DELEGATE_SEED,
-        stake_account_key.as_ref(),
-        &[delegate_bump],
-    ]];
-
+    // Net amount → market ATA (claimable by stakers).
     transfer_checked(
-        CpiContext::new_with_signer(
+        CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
-                from: ctx.accounts.stake_delegate_ata.to_account_info(),
+                from: ctx.accounts.signer_token_account.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
                 to: ctx.accounts.market_token_ata.to_account_info(),
-                authority: ctx.accounts.stake_delegate.to_account_info(),
+                authority: ctx.accounts.signer.to_account_info(),
             },
-            delegate_seeds,
         ),
-        amount,
+        net_amount,
         ctx.accounts.token_mint.decimals,
     )?;
+
+    // Fee → fee vault ATA. Counted toward `fee_vault.collected_fees` only on
+    // a successful stake_callback so stuck stakes can be refunded cleanly.
+    if fee > 0 {
+        transfer_checked(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.signer_token_account.to_account_info(),
+                    mint: ctx.accounts.token_mint.to_account_info(),
+                    to: ctx.accounts.fee_vault_ata.to_account_info(),
+                    authority: ctx.accounts.signer.to_account_info(),
+                },
+            ),
+            fee,
+            ctx.accounts.token_mint.decimals,
+        )?;
+    }
 
     // Set stake account fields
     ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
@@ -213,7 +197,8 @@ pub fn stake(
     ctx.accounts.stake_account.locked = true;
     ctx.accounts.stake_account.pending_stake = true;
 
-    let market_key = ctx.accounts.market.key();
+    let stake_account_key = ctx.accounts.stake_account.key();
+    let fee_vault_key = ctx.accounts.fee_vault.key();
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
@@ -242,11 +227,11 @@ pub fn stake(
             &ctx.accounts.mxe_account,
             &[
                 CallbackAccount {
-                    pubkey: market_key,
+                    pubkey: stake_account_key,
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: stake_account_key,
+                    pubkey: fee_vault_key,
                     is_writable: true,
                 },
             ],
@@ -276,9 +261,13 @@ pub struct StakeCallback<'info> {
 
     // Callback accounts
     #[account(mut)]
-    pub market: Box<Account<'info, OpportunityMarket>>,
-    #[account(mut)]
     pub stake_account: Box<Account<'info, StakeAccount>>,
+    #[account(
+        mut,
+        seeds = [FEE_VAULT_SEED, fee_vault.mint.as_ref()],
+        bump = fee_vault.bump,
+    )]
+    pub fee_vault: Box<Account<'info, FeeVault>>,
 }
 
 pub fn stake_callback(
@@ -308,10 +297,10 @@ pub fn stake_callback(
     ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
     ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
-    // Count fee as collected only on successful stake
+    // Count fee as collected only on successful stake.
     let fee = ctx.accounts.stake_account.fee;
     if fee > 0 {
-        ctx.accounts.market.collected_fees = ctx.accounts.market
+        ctx.accounts.fee_vault.collected_fees = ctx.accounts.fee_vault
             .collected_fees
             .checked_add(fee)
             .ok_or(ErrorCode::Overflow)?;

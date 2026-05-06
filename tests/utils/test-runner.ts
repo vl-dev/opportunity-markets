@@ -23,17 +23,17 @@ import {
 import {
   createAllowedMint,
   createMarket,
+  fetchFeeVault,
   fetchOpportunityMarket,
+  getFeeVaultAddress,
   getClaimFeesInstructionAsync,
   randomComputationOffset,
   randomStateNonce,
   ensureCentralState,
   addMarketOption,
   initStakeAccount,
-  initStakeDelegate,
-  getStakeDelegateAddress,
-  withdrawStakeDelegate,
-  stakeAsOwner,
+  initFeeVault,
+  stake as stakeIx,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
   incrementOptionTally,
@@ -304,6 +304,17 @@ export class TestRunner {
     });
     await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [allowedMintIx], {
       label: "Create allowed mint",
+    });
+
+    // Init the per-mint fee vault (PDA + ATA in one ix)
+    console.log("Initializing fee vault...");
+    const initFeeVaultIx = await initFeeVault({
+      payer: deployer,
+      tokenMint: runner.mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initFeeVaultIx], {
+      label: "Init fee vault",
     });
 
     // Create ATAs and mint tokens for all accounts
@@ -634,19 +645,7 @@ export class TestRunner {
           const stakeAccountId = this.getNextStakeAccountId(user);
           const stakeAccountNonce = deserializeLE(randomBytes(16));
 
-          // Derive PDAs for the bundled tx
           const [stakeAccountAddress] = await getStakeAccountAddressPda(p.userId, this.marketAddress, stakeAccountId);
-          const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, this.programId);
-          const [stakeDelegateAta] = await findAssociatedTokenPda({
-            mint: this.mint.address,
-            owner: stakeDelegateAddress,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
-          const [marketAta] = await findAssociatedTokenPda({
-            mint: this.mint.address,
-            owner: this.marketAddress,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
 
           // 1. init_stake_account
           const initIx = await initStakeAccount({
@@ -656,37 +655,20 @@ export class TestRunner {
             stakeAccountId,
           });
 
-          // 2. init_stake_delegate (PDA + ATA owned by the PDA)
-          const initDelegateIx = await initStakeDelegate({
-            owner: user.solanaKeypair,
-            stakeAccount: stakeAccountAddress,
-            market: this.marketAddress,
-            mint: this.mint.address,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-            authority: null,
-          });
-
-          // 3. fund the delegate ATA
-          const fundDelegateIx = getTransferInstruction({
-            source: user.tokenAccount,
-            destination: stakeDelegateAta,
-            authority: user.solanaKeypair,
-            amount: p.amount,
-          });
-
-          // 4. stake
+          // 2. stake
           const inputNonce = randomBytes(16);
           const optionCiphertext = cipher.encrypt([BigInt(p.optionId)], inputNonce);
           const computationOffset = randomComputationOffset();
 
-          const stakeIx = await stakeAsOwner(
+          const stakeInstruction = await stakeIx(
             {
+              signer: user.solanaKeypair,
               payer: user.solanaKeypair,
               market: this.marketAddress,
               stakeAccount: stakeAccountAddress,
               stakeAccountId,
               tokenMint: this.mint.address,
-              marketTokenAta: marketAta,
+              signerTokenAccount: user.tokenAccount,
               tokenProgram: TOKEN_PROGRAM_ADDRESS,
               amount: p.amount,
               selectedOptionCiphertext: optionCiphertext[0],
@@ -698,20 +680,11 @@ export class TestRunner {
             this.getArciumConfig(computationOffset)
           );
 
-          // 5. close the now-empty delegate account, refunding rent to owner
-          const withdrawDelegateIx = await withdrawStakeDelegate({
-            owner: user.solanaKeypair,
-            stakeAccount: stakeAccountAddress,
-            mint: this.mint.address,
-            ownerTokenAccount: user.tokenAccount,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
-
           await sendTransaction(
             this.rpc,
             this.sendAndConfirm,
             user.solanaKeypair,
-            [initIx, initDelegateIx, fundDelegateIx, stakeIx, withdrawDelegateIx],
+            [initIx, stakeInstruction],
             { label: "Stake on option" }
           );
 
@@ -904,52 +877,22 @@ export class TestRunner {
       label: `Init stake account`,
     });
 
-    // Init stake delegate + fund its ATA
     const [stakeAccountAddress] = await getStakeAccountAddressPda(userId, this.marketAddress, stakeAccountId);
-    const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, this.programId);
-    const [stakeDelegateAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: stakeDelegateAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-
-    const initDelegateIx = await initStakeDelegate({
-      owner: user.solanaKeypair,
-      stakeAccount: stakeAccountAddress,
-      market: this.marketAddress,
-      mint: this.mint.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-      authority: null,
-    });
-    const fundDelegateIx = getTransferInstruction({
-      source: user.tokenAccount,
-      destination: stakeDelegateAta,
-      authority: user.solanaKeypair,
-      amount,
-    });
-    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initDelegateIx, fundDelegateIx], {
-      label: `Init stake delegate + fund`,
-    });
 
     // Build stake instruction
     const inputNonce = randomBytes(16);
     const optionCiphertext = cipher.encrypt([BigInt(optionId)], inputNonce);
     const computationOffset = randomComputationOffset();
 
-    const [marketAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: this.marketAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-
-    const stakeIx = await stakeAsOwner(
+    const stakeInstruction = await stakeIx(
       {
+        signer: user.solanaKeypair,
         payer: user.solanaKeypair,
         market: this.marketAddress,
         stakeAccount: stakeAccountAddress,
         stakeAccountId,
         tokenMint: this.mint.address,
-        marketTokenAta: marketAta,
+        signerTokenAccount: user.tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         amount,
         selectedOptionCiphertext: optionCiphertext[0],
@@ -961,7 +904,7 @@ export class TestRunner {
       this.getArciumConfig(computationOffset)
     );
 
-    // Build close stuck instruction
+    // Build close stuck instruction (codama auto-derives feeVault/feeVaultAta from tokenMint)
     const closeStuckIx = await closeStuckStakeAccountIx({
       signer: user.solanaKeypair,
       market: this.marketAddress,
@@ -972,7 +915,7 @@ export class TestRunner {
     });
 
     // Send both in the same transaction
-    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeIx, closeStuckIx], {
+    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeInstruction, closeStuckIx], {
       label: `Stake + close stuck stake account`,
     });
 
@@ -1018,7 +961,6 @@ export class TestRunner {
     const ix = await getClaimFeesInstructionAsync({
       signer: this.marketCreator.solanaKeypair,
       tokenMint: this.mint.address,
-      market: this.marketAddress,
       destinationTokenAccount: this.marketCreator.tokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
@@ -1054,6 +996,11 @@ export class TestRunner {
 
   async fetchMarket() {
     return fetchOpportunityMarket(this.rpc, this.marketAddress);
+  }
+
+  async fetchFeeVault() {
+    const [feeVaultAddress] = await getFeeVaultAddress(this.mint.address, this.programId);
+    return fetchFeeVault(this.rpc, feeVaultAddress);
   }
 
   getMxePublicKey(): Uint8Array {

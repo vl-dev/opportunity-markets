@@ -450,54 +450,39 @@
           "name": "token_mint"
         },
         {
-          "name": "market",
+          "name": "fee_vault",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  111,
-                  112,
-                  112,
-                  111,
-                  114,
-                  116,
-                  117,
-                  110,
-                  105,
-                  116,
-                  121,
-                  95,
-                  109,
-                  97,
-                  114,
-                  107,
+                  102,
                   101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
                   116
                 ]
               },
               {
                 "kind": "account",
-                "path": "market.creator",
-                "account": "OpportunityMarket"
-              },
-              {
-                "kind": "account",
-                "path": "market.index",
-                "account": "OpportunityMarket"
+                "path": "token_mint"
               }
             ]
           }
         },
         {
-          "name": "market_token_ata",
+          "name": "fee_vault_ata",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "fee_vault"
               },
               {
                 "kind": "account",
@@ -857,6 +842,89 @@
             "Signer's token account to receive refund"
           ],
           "writable": true
+        },
+        {
+          "name": "fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_vault_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "fee_vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
           "name": "token_program"
@@ -1821,6 +1889,124 @@
       ]
     },
     {
+      "name": "init_fee_vault",
+      "discriminator": [
+        141,
+        17,
+        88,
+        209,
+        137,
+        84,
+        89,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_vault_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "fee_vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "init_stake_account",
       "discriminator": [
         132,
@@ -1894,142 +2080,6 @@
         {
           "name": "stake_account_id",
           "type": "u32"
-        }
-      ]
-    },
-    {
-      "name": "init_stake_delegate",
-      "discriminator": [
-        153,
-        134,
-        247,
-        50,
-        147,
-        198,
-        224,
-        251
-      ],
-      "accounts": [
-        {
-          "name": "owner",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "stake_account"
-        },
-        {
-          "name": "market"
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "stake_delegate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "stake_account"
-              }
-            ]
-          }
-        },
-        {
-          "name": "stake_delegate_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "stake_delegate"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "authority",
-          "type": {
-            "option": "pubkey"
-          }
         }
       ]
     },
@@ -2779,6 +2829,10 @@
       ],
       "accounts": [
         {
+          "name": "signer",
+          "signer": true
+        },
+        {
           "name": "payer",
           "writable": true,
           "signer": true
@@ -2829,49 +2883,20 @@
           "name": "token_mint"
         },
         {
-          "name": "stake_delegate",
-          "docs": [
-            "Stake delegate PDA bound to this specific stake_account."
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "stake_account"
-              }
-            ]
-          }
-        },
-        {
-          "name": "stake_delegate_ata",
+          "name": "signer_token_account",
           "docs": [
             "Funds the stake."
           ],
+          "writable": true
+        },
+        {
+          "name": "market_token_ata",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "stake_delegate"
+                "path": "market"
               },
               {
                 "kind": "account",
@@ -2922,13 +2947,45 @@
           }
         },
         {
-          "name": "market_token_ata",
+          "name": "fee_vault",
+          "docs": [
+            "Per-mint fee vault. Tracks `collected_fees` and owns `fee_vault_ata`."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_vault_ata",
+          "docs": [
+            "Receives the fee portion of every stake."
+          ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "fee_vault"
               },
               {
                 "kind": "account",
@@ -3096,19 +3153,6 @@
         {
           "name": "state_nonce",
           "type": "u128"
-        },
-        {
-          "name": "signature_expiry_timestamp",
-          "type": "u64"
-        },
-        {
-          "name": "owner_signature",
-          "type": {
-            "array": [
-              "u8",
-              64
-            ]
-          }
         }
       ]
     },
@@ -3146,12 +3190,35 @@
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
         {
-          "name": "market",
+          "name": "stake_account",
           "writable": true
         },
         {
-          "name": "stake_account",
-          "writable": true
+          "name": "fee_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  101,
+                  101,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "fee_vault.mint",
+                "account": "FeeVault"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -3463,128 +3530,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "withdraw_stake_delegate",
-      "discriminator": [
-        146,
-        167,
-        81,
-        107,
-        8,
-        5,
-        183,
-        53
-      ],
-      "accounts": [
-        {
-          "name": "owner",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "stake_account"
-        },
-        {
-          "name": "mint"
-        },
-        {
-          "name": "stake_delegate",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "stake_account"
-              }
-            ]
-          }
-        },
-        {
-          "name": "stake_delegate_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "stake_delegate"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "owner_token_account",
-          "writable": true
-        },
-        {
-          "name": "token_program"
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -3680,6 +3625,19 @@
       ]
     },
     {
+      "name": "FeeVault",
+      "discriminator": [
+        192,
+        178,
+        69,
+        232,
+        58,
+        149,
+        157,
+        132
+      ]
+    },
+    {
       "name": "MXEAccount",
       "discriminator": [
         103,
@@ -3745,19 +3703,6 @@
       ]
     },
     {
-      "name": "StakeDelegate",
-      "discriminator": [
-        212,
-        10,
-        35,
-        97,
-        66,
-        60,
-        169,
-        214
-      ]
-    },
-    {
       "name": "TimelockedAccountChange",
       "discriminator": [
         212,
@@ -3809,6 +3754,19 @@
         210,
         97,
         148
+      ]
+    },
+    {
+      "name": "FeeVaultInitializedEvent",
+      "discriminator": [
+        219,
+        138,
+        2,
+        184,
+        253,
+        99,
+        165,
+        51
       ]
     },
     {
@@ -3952,32 +3910,6 @@
         181,
         69,
         20
-      ]
-    },
-    {
-      "name": "StakeDelegateClosedEvent",
-      "discriminator": [
-        43,
-        82,
-        149,
-        235,
-        133,
-        54,
-        184,
-        159
-      ]
-    },
-    {
-      "name": "StakeDelegateInitializedEvent",
-      "discriminator": [
-        165,
-        162,
-        62,
-        33,
-        54,
-        113,
-        31,
-        206
       ]
     },
     {
@@ -4263,16 +4195,6 @@
     },
     {
       "code": 6035,
-      "name": "SignatureExpired",
-      "msg": "User signature has expired"
-    },
-    {
-      "code": 6036,
-      "name": "InvalidSignature",
-      "msg": "Invalid user signature"
-    },
-    {
-      "code": 6037,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     }
@@ -4764,12 +4686,64 @@
       }
     },
     {
+      "name": "FeeVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "collected_fees",
+            "type": "u64"
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "FeeVaultInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fee_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "FeesClaimedEvent",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "market",
+            "name": "fee_vault",
             "type": "pubkey"
           },
           {
@@ -5236,10 +5210,6 @@
           {
             "name": "protocol_fee_bp",
             "type": "u16"
-          },
-          {
-            "name": "collected_fees",
-            "type": "u64"
           },
           {
             "name": "min_stake_amount",
@@ -5827,82 +5797,6 @@
           {
             "name": "account_id",
             "type": "u32"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeDelegate",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "authority",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeDelegateClosedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stake_delegate",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "withdrawn_amount",
-            "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeDelegateInitializedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stake_delegate",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "authority",
-            "type": "pubkey"
           },
           {
             "name": "timestamp",
