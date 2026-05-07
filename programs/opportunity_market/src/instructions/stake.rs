@@ -132,7 +132,9 @@ pub fn stake(
     let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-    let stake_end_timestamp = open_timestamp + market.time_to_stake;
+    let stake_end_timestamp = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
@@ -261,6 +263,13 @@ pub fn stake_callback(
         Ok(StakeOutput { field_0 }) => field_0,
         Err(e) => return Err(e),
     };
+
+    // Only run on the queue-time stake_account.
+    // A late callback delivered after close_stuck + re-init would see pending_stake=false.
+    require!(
+        ctx.accounts.stake_account.pending_stake,
+        ErrorCode::InvalidAccountState
+    );
 
     // Unlock
     ctx.accounts.stake_account.locked = false;

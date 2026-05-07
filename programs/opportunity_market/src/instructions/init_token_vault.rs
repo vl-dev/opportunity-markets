@@ -8,8 +8,7 @@ use crate::events::{emit_ts, TokenVaultInitializedEvent};
 use crate::state::{CentralState, TokenVault};
 
 /// Initializes the per-mint TokenVault. The vault's existence whitelists
-/// the mint for `create_market`, and its ATA holds every staked token,
-/// every sponsored reward, and every collected fee for that mint.
+/// the mint for `create_market`, and its ATA holds all tokens of this mint.
 #[derive(Accounts)]
 pub struct InitTokenVault<'info> {
     #[account(mut)]

@@ -52,7 +52,9 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
     );
 
     // Check if closing early is allowed
-    let stake_end_timestamp = open_timestamp + market.time_to_stake;
+    let stake_end_timestamp = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
     if !market.allow_closing_early {
         require!(
             current_timestamp >= stake_end_timestamp,
@@ -62,7 +64,9 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
 
     // If staking is still open, close it by setting time_to_stake to end now
     if current_timestamp < stake_end_timestamp {
-        market.time_to_stake = current_timestamp - open_timestamp;
+        market.time_to_stake = current_timestamp
+            .checked_sub(open_timestamp)
+            .ok_or(ErrorCode::Overflow)?;
     }
 
     // Save the selected options

@@ -37,7 +37,9 @@ pub fn unstake_early(
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-    let stake_end_timestamp = open_timestamp + market.time_to_stake;
+    let stake_end_timestamp = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
@@ -45,7 +47,9 @@ pub fn unstake_early(
     );
 
     // Set the timestamp when stake becomes unstakeable
-    let unstakeable_at = current_timestamp + market.unstake_delay_seconds;
+    let unstakeable_at = current_timestamp
+        .checked_add(market.unstake_delay_seconds)
+        .ok_or(ErrorCode::Overflow)?;
     ctx.accounts.stake_account.unstakeable_at_timestamp = Some(unstakeable_at);
 
     emit_ts!(UnstakeInitiatedEvent {

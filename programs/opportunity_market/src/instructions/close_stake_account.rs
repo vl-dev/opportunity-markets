@@ -91,36 +91,36 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
 
     require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
 
-    // Winners were selected, stakes must be revealed
-    let revealed_option = stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
-
-    // Check that the option_id matches the user's revealed option
-    require!(
-        revealed_option == option_id,
-        ErrorCode::InvalidOptionId
-    );
-
-    // Check if this stake was for a winning option and user incremented the tally
-    // If so, calculate reward
+    // If the stake was revealed, the passed option_id must match it.
+    // If the reveal never ran, allow closing with a zero reward so the
+    // user can recover the stake_account rent.
     let mut user_reward: u64 = 0;
-    if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option)) {
-        if stake_account.total_incremented {
-            let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
-            let total_score = option.total_score;
+    if let Some(revealed_option) = stake_account.revealed_option {
+        require!(
+            revealed_option == option_id,
+            ErrorCode::InvalidOptionId
+        );
 
-            let reward_amount = market.reward_amount as u128;
-            let percentage = winning.reward_percentage as u128;
-            user_reward = (user_score as u128)
-                .checked_mul(reward_amount)
-                .ok_or(ErrorCode::Overflow)?
-                .checked_mul(percentage)
-                .ok_or(ErrorCode::Overflow)?
-                .checked_div(
-                    (total_score as u128)
-                        .checked_mul(100)
-                        .ok_or(ErrorCode::Overflow)?
-                )
-                .ok_or(ErrorCode::Overflow)? as u64;
+        // Check if this stake was for a winning option and user incremented the tally
+        if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option)) {
+            if stake_account.total_incremented {
+                let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
+                let total_score = option.total_score;
+
+                let reward_amount = market.reward_amount as u128;
+                let percentage = winning.reward_percentage as u128;
+                user_reward = (user_score as u128)
+                    .checked_mul(reward_amount)
+                    .ok_or(ErrorCode::Overflow)?
+                    .checked_mul(percentage)
+                    .ok_or(ErrorCode::Overflow)?
+                    .checked_div(
+                        (total_score as u128)
+                            .checked_mul(100)
+                            .ok_or(ErrorCode::Overflow)?
+                    )
+                    .ok_or(ErrorCode::Overflow)? as u64;
+            }
         }
     }
 

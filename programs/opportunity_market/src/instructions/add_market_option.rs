@@ -37,7 +37,9 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
     if let Some(open_timestamp) = market.open_timestamp {
-        let stake_end_timestamp = open_timestamp + market.time_to_stake;
+        let stake_end_timestamp = open_timestamp
+            .checked_add(market.time_to_stake)
+            .ok_or(ErrorCode::Overflow)?;
         require!(
             current_timestamp <= stake_end_timestamp,
             ErrorCode::StakingNotActive
