@@ -1,4 +1,6 @@
 {
   "protocolFeeBp": 0,
-  "feeClaimer": "GoaHvr9RwFqDHH7aqC8qWKTVgPkKApq5RhKzJvTVNKm5"
+  "feeClaimer": "GoaHvr9RwFqDHH7aqC8qWKTVgPkKApq5RhKzJvTVNKm5",
+  "minTimeToStakeSeconds": 3600,
+  "minTimeToRevealSeconds": 86400
 }

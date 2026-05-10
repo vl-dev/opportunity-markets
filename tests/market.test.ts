@@ -7,7 +7,7 @@ import { deserializeLE } from "@arcium-hq/client";
 import { randomBytes } from "crypto";
 import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
-  OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
+  OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
@@ -770,7 +770,7 @@ describe("OpportunityMarket", () => {
     // Try to stake before staking period starts — should fail
     await shouldThrowCustomError(
       () => runner.stakeOnOption(user, 50_000_000n, optionA),
-      OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
+      OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
     );
   });
 

@@ -27,7 +27,7 @@ pub struct ReclaimStake<'info> {
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         constraint = !stake_account.stake_reclaimed @ ErrorCode::AlreadyUnstaked,
-        constraint = stake_account.staked_at_timestamp.is_some() @ ErrorCode::StakingNotActive,
+        constraint = stake_account.staked_at_timestamp.is_some() @ ErrorCode::NoStake,
         constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
@@ -76,7 +76,8 @@ pub fn reclaim_stake(
         .checked_add(market.time_to_stake)
         .ok_or(ErrorCode::Overflow)?;
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
-    require!(current_timestamp >= stake_end, ErrorCode::StakingNotActive);
+    
+    require!(current_timestamp >= stake_end, ErrorCode::StakeWindowMismatch);
 
     let amount = ctx.accounts.stake_account.amount;
 

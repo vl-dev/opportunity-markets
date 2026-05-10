@@ -31,15 +31,30 @@ pub mod opportunity_market {
         ctx: Context<InitCentralState>,
         protocol_fee_bp: u16,
         fee_claimer: Pubkey,
+        min_time_to_stake_seconds: u64,
+        min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::init_central_state(ctx, protocol_fee_bp, fee_claimer)
+        instructions::init_central_state(
+            ctx,
+            protocol_fee_bp,
+            fee_claimer,
+            min_time_to_stake_seconds,
+            min_time_to_reveal_seconds,
+        )
     }
 
     pub fn update_central_state(
         ctx: Context<UpdateCentralState>,
         protocol_fee_bp: u16,
+        min_time_to_stake_seconds: u64,
+        min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::update_central_state(ctx, protocol_fee_bp)
+        instructions::update_central_state(
+            ctx,
+            protocol_fee_bp,
+            min_time_to_stake_seconds,
+            min_time_to_reveal_seconds,
+        )
     }
 
     pub fn propose_new_update_authority(

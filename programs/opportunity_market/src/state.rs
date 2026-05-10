@@ -13,8 +13,11 @@ pub struct CentralState {
     // Only this address can call claim_fees
     pub fee_claimer: Pubkey,
 
-    /// Reserved for future use
-    pub _reserved: [u8; 128],
+    // Minimum time_to_stake (seconds) accepted by create_market.
+    pub min_time_to_stake_seconds: u64,
+
+    // Minimum time_to_reveal (seconds) accepted by create_market.
+    pub min_time_to_reveal_seconds: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
@@ -109,9 +112,6 @@ pub struct TokenVault {
     pub bump: u8,
     pub mint: Pubkey,
     pub collected_fees: u64,
-
-    /// Reserved for future use
-    pub _reserved: [u8; 128],
 }
 
 #[account]

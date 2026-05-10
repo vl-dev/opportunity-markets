@@ -68,14 +68,15 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
     let stake_account = &ctx.accounts.stake_account;
 
     let staked_at_timestamp = stake_account.staked_at_timestamp
-        .ok_or(ErrorCode::StakingNotActive)?;
-    let stake_end = stake_account.unstaked_at_timestamp
+        .ok_or(ErrorCode::NoStake)?;
+    let user_stake_end = stake_account.unstaked_at_timestamp
         .unwrap_or(reveal_start);
 
     let user_score = calculate_user_score(
         open_timestamp,
-        stake_end,
+        reveal_start,
         staked_at_timestamp,
+        user_stake_end,
         stake_amount,
         market.earliness_cutoff_seconds,
     )?;

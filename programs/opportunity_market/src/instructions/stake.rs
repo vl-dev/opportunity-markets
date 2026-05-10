@@ -138,7 +138,7 @@ pub fn stake(
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakingNotActive
+        ErrorCode::StakeWindowMismatch
     );
 
     // Calculate fee from the market's snapshot of protocol_fee_bp (taken at create time).

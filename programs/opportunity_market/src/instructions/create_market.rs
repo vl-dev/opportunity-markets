@@ -55,8 +55,10 @@ pub fn create_market(
     min_stake_amount: u64,
 ) -> Result<()> {
     require!(
-        earliness_cutoff_seconds <= time_to_stake,
-        ErrorCode::EarlinessCutoffTooLarge
+        time_to_stake >= ctx.accounts.central_state.min_time_to_stake_seconds
+            && time_to_reveal >= ctx.accounts.central_state.min_time_to_reveal_seconds
+            && earliness_cutoff_seconds <= time_to_stake,
+        ErrorCode::InvalidParameters
     );
 
     let creator_key = ctx.accounts.creator.key();

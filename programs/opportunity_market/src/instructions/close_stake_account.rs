@@ -91,9 +91,8 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
 
     require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
 
-    // If the stake was revealed, the passed option_id must match it.
-    // If the reveal never ran, allow closing with a zero reward so the
-    // user can recover the stake_account rent.
+    // If the stake was revealed and user staked on winning options, pay reward.
+    // If reveal never ran, allow close with zero reward so the user can recover the stake_account rent.
     let mut user_reward: u64 = 0;
     if let Some(revealed_option) = stake_account.revealed_option {
         require!(
@@ -101,7 +100,7 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
             ErrorCode::InvalidOptionId
         );
 
-        // Check if this stake was for a winning option and user incremented the tally
+        // Check that this stake was for one of the winning options
         if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option)) {
             if stake_account.total_incremented {
                 let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;

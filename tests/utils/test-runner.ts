@@ -278,6 +278,10 @@ export class TestRunner {
       signer: deployer,
       protocolFeeBp: 100,
       feeClaimer: creatorAccountBase.keypair.address,
+
+      // Tests use short windows.
+      minTimeToStakeSeconds: 1n,
+      minTimeToRevealSeconds: 1n,
     });
     if (centralStateIx) {
       await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {

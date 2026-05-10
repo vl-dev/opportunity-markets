@@ -1645,7 +1645,8 @@
         {
           "name": "payer",
           "writable": true,
-          "signer": true
+          "signer": true,
+          "address": "GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq"
         },
         {
           "name": "central_state",
@@ -1686,6 +1687,14 @@
         {
           "name": "fee_claimer",
           "type": "pubkey"
+        },
+        {
+          "name": "min_time_to_stake_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "min_time_to_reveal_seconds",
+          "type": "u64"
         }
       ]
     },
@@ -3209,6 +3218,14 @@
         {
           "name": "protocol_fee_bp",
           "type": "u16"
+        },
+        {
+          "name": "min_time_to_stake_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "min_time_to_reveal_seconds",
+          "type": "u64"
         }
       ]
     },
@@ -3866,8 +3883,8 @@
     },
     {
       "code": 6005,
-      "name": "InvalidTimestamp",
-      "msg": "Timestamp must be in the future"
+      "name": "InvalidParameters",
+      "msg": "Invalid parameters"
     },
     {
       "code": 6006,
@@ -3886,103 +3903,103 @@
     },
     {
       "code": 6009,
-      "name": "StakingNotActive",
-      "msg": "Staking period is not active"
+      "name": "StakeWindowMismatch",
+      "msg": "Stake window error"
     },
     {
       "code": 6010,
+      "name": "NoStake",
+      "msg": "Stake account has no recorded stake"
+    },
+    {
+      "code": 6011,
       "name": "WinnerAlreadySelected",
       "msg": "Market winner already selected"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "AlreadyRevealed",
       "msg": "Stake already revealed"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "MarketNotResolved",
       "msg": "Market not yet resolved"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "NotRevealed",
       "msg": "Stake not yet revealed"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "TallyAlreadyIncremented",
       "msg": "Tally already incremented for this stake account"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "Overflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "RevealPeriodEnded",
       "msg": "Reveal period has already ended"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "InvalidMint",
       "msg": "Token mint does not match account mint"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "AlreadyUnstaked",
       "msg": "Already unstaked"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "AlreadyStaked",
       "msg": "Already staked for this stake account"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "DepositBelowMinimum",
       "msg": "Deposit amount below minimum required for option creation"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "AddOptionStakeFailed",
       "msg": "Add option stake failed: insufficient balance or below minimum deposit"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "Locked",
       "msg": "Account is locked"
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "InvalidAccountState",
       "msg": "Invalid account state"
     },
     {
-      "code": 6024,
+      "code": 6025,
       "name": "UnstakeDelayNotMet",
       "msg": "Unstake delay period has not passed yet"
     },
     {
-      "code": 6025,
+      "code": 6026,
       "name": "UnstakeNotInitiated",
       "msg": "Unstake has not been initiated"
     },
     {
-      "code": 6026,
+      "code": 6027,
       "name": "ClosingEarlyNotAllowed",
       "msg": "Market cannot be closed before stake period ends"
     },
     {
-      "code": 6027,
+      "code": 6028,
       "name": "NoFeesToClaim",
       "msg": "No fees to claim"
-    },
-    {
-      "code": 6028,
-      "name": "InvalidWinningOptionsInput",
-      "msg": "Invalid winning options input"
     },
     {
       "code": 6029,
@@ -3991,31 +4008,21 @@
     },
     {
       "code": 6030,
-      "name": "ProtocolFeeTooHigh",
-      "msg": "Protocol fee exceeds maximum 500 bp"
-    },
-    {
-      "code": 6031,
       "name": "MarketPaused",
       "msg": "Market staking is currently paused"
     },
     {
-      "code": 6032,
+      "code": 6031,
       "name": "MarketNotPaused",
       "msg": "Market is not paused"
     },
     {
-      "code": 6033,
-      "name": "EarlinessCutoffTooLarge",
-      "msg": "Earliness cutoff exceeds staking period"
-    },
-    {
-      "code": 6034,
+      "code": 6032,
       "name": "TimelockNotElapsed",
       "msg": "Timelock period has not elapsed yet"
     },
     {
-      "code": 6035,
+      "code": 6033,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     }
@@ -4181,16 +4188,12 @@
             "type": "pubkey"
           },
           {
-            "name": "_reserved",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
+            "name": "min_time_to_stake_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "min_time_to_reveal_seconds",
+            "type": "u64"
           }
         ]
       }
@@ -5876,18 +5879,6 @@
           {
             "name": "collected_fees",
             "type": "u64"
-          },
-          {
-            "name": "_reserved",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
           }
         ]
       }

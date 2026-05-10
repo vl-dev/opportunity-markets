@@ -163,6 +163,14 @@ pub fn reveal_stake_callback(
         Err(e) => return Err(e),
     };
 
+    // Only run on the queue-time stake_account. 
+    // A late callback delivered after close_stake_account + re-init would see pending_reveal=false
+    require!(
+        ctx.accounts.stake_account.pending_reveal
+            && ctx.accounts.stake_account.revealed_option.is_none(),
+        ErrorCode::InvalidAccountState
+    );
+
     // Unlock only on success
     ctx.accounts.stake_account.locked = false;
     ctx.accounts.stake_account.pending_reveal = false;
