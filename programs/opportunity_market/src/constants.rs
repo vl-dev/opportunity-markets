@@ -9,6 +9,9 @@ pub const DEPLOYER_AUTHORITY: Pubkey = pubkey!("GrSg7Cw3vDKCyqFXy3djdADAuZpiK37r
 /// Fixed timelock delay: 48 hours
 pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
 
+/// Maximum unstake delay: 3 days
+pub const MAX_UNSTAKE_DELAY_SECONDS: u64 = 3 * 24 * 60 * 60;
+
 /// PDA seeds
 pub const CENTRAL_STATE_SEED: &[u8] = b"central_state";
 pub const OPPORTUNITY_MARKET_SEED: &[u8] = b"opportunity_market";

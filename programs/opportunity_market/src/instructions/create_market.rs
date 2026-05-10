@@ -1,7 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::Mint;
 
-use crate::constants::{CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED, TOKEN_VAULT_SEED};
+use crate::constants::{
+    CENTRAL_STATE_SEED, MAX_UNSTAKE_DELAY_SECONDS, OPPORTUNITY_MARKET_SEED, TOKEN_VAULT_SEED,
+};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
 use crate::state::{CentralState, OpportunityMarket, TokenVault};
@@ -57,7 +59,8 @@ pub fn create_market(
     require!(
         time_to_stake >= ctx.accounts.central_state.min_time_to_stake_seconds
             && time_to_reveal >= ctx.accounts.central_state.min_time_to_reveal_seconds
-            && earliness_cutoff_seconds <= time_to_stake,
+            && earliness_cutoff_seconds <= time_to_stake
+            && unstake_delay_seconds <= MAX_UNSTAKE_DELAY_SECONDS,
         ErrorCode::InvalidParameters
     );
 
