@@ -20,6 +20,8 @@ export * from "./unstakeEarly";
 export * from "./doUnstakeEarly";
 export * from "./createPlatformConfig";
 export * from "./updatePlatformConfig";
+export * from "./claimFees";
+export * from "./claimCreatorFees";
 export * from "./withdrawReward";
 export * from "./proposeNewUpdateAuthority";
 export * from "./proposeNewFeeClaimAuthority";

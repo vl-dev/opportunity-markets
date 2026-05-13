@@ -24,8 +24,8 @@ import {
   createMarket,
   fetchOpportunityMarket,
   getPlatformConfigAddress,
-  getClaimFeesInstructionAsync,
-  getClaimCreatorFeesInstructionAsync,
+  claimFees as claimFeesIx,
+  claimCreatorFees as claimCreatorFeesIx,
   randomComputationOffset,
   createPlatformConfig,
   addMarketOption,
@@ -976,7 +976,7 @@ export class Platform {
   // ============================================================================
 
   async claimFees(): Promise<void> {
-    const ix = await getClaimFeesInstructionAsync({
+    const ix = await claimFeesIx({
       signer: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       platformConfig: this.platformConfigAddress,
@@ -991,7 +991,7 @@ export class Platform {
   }
 
   async claimCreatorFees(destinationTokenAccount?: Address): Promise<void> {
-    const ix = await getClaimCreatorFeesInstructionAsync({
+    const ix = await claimCreatorFeesIx({
       signer: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       tokenMint: this.mint.address,
