@@ -16,7 +16,6 @@ import {
   appendTransactionMessageInstructions,
   signTransactionMessageWithSigners,
   sendAndConfirmTransactionFactory,
-  getSignatureFromTransaction,
   getBase64EncodedWireTransaction,
   assertIsTransactionWithBlockhashLifetime,
 } from "@solana/kit";
@@ -25,7 +24,10 @@ import {
   OpportunityMarketOption,
   createMarket,
   fetchOpportunityMarket,
-  getInitCentralStateInstructionAsync,
+  getInitPlatformConfigInstructionAsync,
+  getInitAllowedMintInstructionAsync,
+  getPlatformConfigAddress,
+  getOpportunityMarketAddress,
 } from "../../js/src";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
@@ -79,19 +81,16 @@ const DEFAULT_CONFIG: Required<CreateTestEnvironmentConfig> = {
   rpcUrl: "http://127.0.0.1:8899",
   wsUrl: "ws://127.0.0.1:8900",
   numParticipants: 5,
-  airdropLamports: 2_000_000_000n, // 2 SOL
-  initialTokenAmount: 1_000_000_000n, // 1 billion tokens per account
+  airdropLamports: 2_000_000_000n,
+  initialTokenAmount: 1_000_000_000n,
   marketConfig: {
-    rewardAmount: 1_000_000_000n, // 1 billion tokens
-    timeToStake: 120n, // 2 minutes
-    timeToReveal: 60n, // 1 minute
-    unstakeDelaySeconds: 10n, // 10 seconds
+    rewardAmount: 1_000_000_000n,
+    timeToStake: 120n,
+    timeToReveal: 60n,
+    unstakeDelaySeconds: 10n,
   },
 };
 
-/**
- * Fetches the MXE public key from the chain with retry logic.
- */
 async function getMXEPublicKeyWithRetry(
   provider: anchor.AnchorProvider,
   programId: anchor.web3.PublicKey,
@@ -116,31 +115,12 @@ async function getMXEPublicKeyWithRetry(
   throw new Error(`Failed to fetch MXE public key after ${maxRetries} attempts`);
 }
 
-/**
- * Creates a test account with x25519 keypair for encryption.
- * Note: tokenAccount is set later after mint creation.
- */
 async function createAccount(): Promise<Omit<Account, "initialAirdroppedLamports" | "tokenAccount">> {
   const keypair = await generateKeyPairSigner();
-
-  // Generate x25519 keypair for encryption
   const x25519Keypair = generateX25519Keypair();
-
   return { keypair, x25519Keypair };
 }
 
-/**
- * Creates a test environment with participant accounts, airdrops, and a market.
- *
- * This function:
- * 1. Creates the specified number of participant accounts (default: 5)
- * 2. Creates a market creator account
- * 3. Airdrops SOL to all accounts in parallel
- * 4. Creates a market using the createMarket instruction
- *
- * Note: This does NOT initialize encrypted token accounts or open the market.
- * Those operations require MPC computation and should be done separately.
- */
 export async function createTestEnvironment(
   provider: anchor.AnchorProvider,
   programId: Address,
@@ -154,27 +134,21 @@ export async function createTestEnvironment(
 
   const { rpcUrl, wsUrl, numParticipants, airdropLamports, initialTokenAmount, marketConfig } = mergedConfig;
 
-  // Initialize RPC clients
   const rpc = createSolanaRpc(rpcUrl);
   const rpcSubscriptions = createSolanaRpcSubscriptions(wsUrl);
   const airdrop = airdropFactory({ rpc, rpcSubscriptions });
   const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
-  // Fetch MXE public key (requires web3.js PublicKey for @arcium-hq/client)
   const programIdLegacy = new PublicKey(programId);
   const mxePublicKey = await getMXEPublicKeyWithRetry(provider, programIdLegacy);
 
-  // Create all accounts (participants + market creator)
   const accountPromises = Array.from({ length: numParticipants + 1 }, () =>
     createAccount()
   );
   const accounts = await Promise.all(accountPromises);
 
-  // Split into participants and creator
-  const participantAccounts = accounts.slice(0, numParticipants);
   const creatorAccountBase = accounts[numParticipants];
 
-  // Airdrop to all accounts in parallel
   console.log(`\nAirdropping ${Number(airdropLamports) / 1_000_000_000} SOL to all accounts...`);
   const airdropPromises = accounts.map((account) =>
     airdrop({
@@ -185,7 +159,6 @@ export async function createTestEnvironment(
   );
   await Promise.all(airdropPromises);
 
-  // Create SPL token mint (creator is mint authority)
   console.log("\nCreating SPL token mint...");
   const mint = await createTokenMint(
     rpc,
@@ -195,7 +168,6 @@ export async function createTestEnvironment(
   );
   console.log(`  Mint created: ${mint.address}`);
 
-  // Create ATAs and mint tokens for all accounts
   console.log("\nCreating ATAs and minting tokens...");
   const accountsWithTokens: Array<{
     keypair: KeyPairSigner;
@@ -226,11 +198,9 @@ export async function createTestEnvironment(
     });
   }
 
-  // Split into participants and creator with full Account type
   const participantsWithTokens = accountsWithTokens.slice(0, numParticipants);
   const creatorAccountWithTokens = accountsWithTokens[numParticipants];
 
-  // Build the final account objects
   const participants: Account[] = participantsWithTokens.map((account) => ({
     ...account,
     initialAirdroppedLamports: airdropLamports,
@@ -241,13 +211,24 @@ export async function createTestEnvironment(
     initialAirdroppedLamports: airdropLamports,
   };
 
-  // Initialize central state
-  const initCentralStateIx = await getInitCentralStateInstructionAsync({
+  const initPlatformConfigIx = await getInitPlatformConfigInstructionAsync({
     payer: creatorAccount.keypair,
-    protocolFeeBp: 0,
-    feeClaimer: creatorAccount.keypair.address,
+    platformFeeBp: 0,
+    rewardPoolFeeBp: 0,
+    feeClaimAuthority: creatorAccount.keypair.address,
     minTimeToStakeSeconds: 1n,
     minTimeToRevealSeconds: 1n,
+  });
+
+  const [platformConfigAddress] = await getPlatformConfigAddress(
+    creatorAccount.keypair.address,
+    programId,
+  );
+
+  const initAllowedMintIx = await getInitAllowedMintInstructionAsync({
+    updateAuthority: creatorAccount.keypair,
+    platformConfig: platformConfigAddress,
+    tokenMint: mint.address,
   });
 
   const { value: csBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
@@ -255,19 +236,20 @@ export async function createTestEnvironment(
     createTransactionMessage({ version: 0 }),
     (msg) => setTransactionMessageFeePayer(creatorAccount.keypair.address, msg),
     (msg) => setTransactionMessageLifetimeUsingBlockhash(csBlockhash, msg),
-    (msg) => appendTransactionMessageInstructions([initCentralStateIx], msg)
+    (msg) => appendTransactionMessageInstructions([initPlatformConfigIx, initAllowedMintIx], msg)
   );
   const csSignedTx = await signTransactionMessageWithSigners(csTxMessage);
   assertIsTransactionWithBlockhashLifetime(csSignedTx);
   await sendAndConfirmTransaction(csSignedTx, { commitment: "confirmed" });
-  console.log("  Central state initialized");
+  console.log("  Platform config + allowed mint initialized");
 
-  // Create the market
   const marketIndex = BigInt(Math.floor(Math.random() * 1000000));
 
   const createMarketIx = await createMarket({
     creator: creatorAccount.keypair,
+    platformConfig: platformConfigAddress,
     tokenMint: mint.address,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: marketConfig.timeToStake,
     timeToReveal: marketConfig.timeToReveal,
@@ -280,10 +262,8 @@ export async function createTestEnvironment(
     minStakeAmount: 0n,
   });
 
-  // Get latest blockhash
   const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
 
-  // Build transaction message
   const transactionMessage = pipe(
     createTransactionMessage({ version: 0 }),
     (msg) => setTransactionMessageFeePayer(creatorAccount.keypair.address, msg),
@@ -291,10 +271,8 @@ export async function createTestEnvironment(
     (msg) => appendTransactionMessageInstructions([createMarketIx], msg)
   );
 
-  // Sign the transaction
   const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
 
-  // Simulate first to see any errors
   const base64Tx = getBase64EncodedWireTransaction(signedTransaction);
   const simResult = await rpc.simulateTransaction(base64Tx, {
     commitment: "confirmed",
@@ -310,11 +288,13 @@ export async function createTestEnvironment(
     throw new Error(`Simulation failed: ${JSON.stringify(simResult.value.err)}`);
   }
 
-  // Send and confirm transaction using Kit RPC
   assertIsTransactionWithBlockhashLifetime(signedTransaction);
   await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
-  // Get market address from the instruction accounts and fetch from chain
-  const marketAddress = createMarketIx.accounts[2].address as Address;
+  const [marketAddress] = await getOpportunityMarketAddress(
+    creatorAccount.keypair.address,
+    marketIndex,
+    programId,
+  );
   const marketAccount = await fetchOpportunityMarket(rpc, marketAddress, { commitment: "confirmed" });
 
   return {
@@ -322,7 +302,7 @@ export async function createTestEnvironment(
       ...marketAccount.data,
       address: marketAddress,
       creatorAccount,
-      options: [], // Options need to be added separately via addMarketOption
+      options: [],
       timeToReveal: marketConfig.timeToReveal,
     },
     participants,

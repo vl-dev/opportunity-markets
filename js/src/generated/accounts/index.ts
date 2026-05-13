@@ -6,8 +6,8 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './allowedMint';
 export * from './arciumSignerAccount';
-export * from './centralState';
 export * from './clockAccount';
 export * from './cluster';
 export * from './computationDefinitionAccount';
@@ -16,6 +16,6 @@ export * from './mXEAccount';
 export * from './opportunityMarket';
 export * from './opportunityMarketOption';
 export * from './opportunityMarketSponsor';
+export * from './platformConfig';
 export * from './stakeAccount';
 export * from './timelockedAccountChange';
-export * from './tokenVault';

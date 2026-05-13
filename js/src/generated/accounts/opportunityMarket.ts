@@ -71,6 +71,7 @@ export type OpportunityMarket = {
   creator: Address;
   index: bigint;
   totalOptions: bigint;
+  platform: Address;
   openTimestamp: Option<bigint>;
   timeToStake: bigint;
   timeToReveal: bigint;
@@ -84,7 +85,9 @@ export type OpportunityMarket = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   paused: boolean;
-  protocolFeeBp: number;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  collectedPlatformFees: bigint;
   minStakeAmount: bigint;
 };
 
@@ -93,6 +96,7 @@ export type OpportunityMarketArgs = {
   creator: Address;
   index: number | bigint;
   totalOptions: number | bigint;
+  platform: Address;
   openTimestamp: OptionOrNullable<number | bigint>;
   timeToStake: number | bigint;
   timeToReveal: number | bigint;
@@ -106,7 +110,9 @@ export type OpportunityMarketArgs = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   paused: boolean;
-  protocolFeeBp: number;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  collectedPlatformFees: number | bigint;
   minStakeAmount: number | bigint;
 };
 
@@ -118,6 +124,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['creator', getAddressEncoder()],
       ['index', getU64Encoder()],
       ['totalOptions', getU64Encoder()],
+      ['platform', getAddressEncoder()],
       ['openTimestamp', getOptionEncoder(getU64Encoder())],
       ['timeToStake', getU64Encoder()],
       ['timeToReveal', getU64Encoder()],
@@ -134,7 +141,9 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
       ['paused', getBooleanEncoder()],
-      ['protocolFeeBp', getU16Encoder()],
+      ['platformFeeBp', getU16Encoder()],
+      ['rewardPoolFeeBp', getU16Encoder()],
+      ['collectedPlatformFees', getU64Encoder()],
       ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
@@ -148,6 +157,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['creator', getAddressDecoder()],
     ['index', getU64Decoder()],
     ['totalOptions', getU64Decoder()],
+    ['platform', getAddressDecoder()],
     ['openTimestamp', getOptionDecoder(getU64Decoder())],
     ['timeToStake', getU64Decoder()],
     ['timeToReveal', getU64Decoder()],
@@ -164,7 +174,9 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
     ['paused', getBooleanDecoder()],
-    ['protocolFeeBp', getU16Decoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
+    ['collectedPlatformFees', getU64Decoder()],
     ['minStakeAmount', getU64Decoder()],
   ]);
 }

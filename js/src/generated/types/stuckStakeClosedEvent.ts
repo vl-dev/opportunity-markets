@@ -30,7 +30,8 @@ export type StuckStakeClosedEvent = {
   stakeAccount: Address;
   stakeAccountId: number;
   refundedAmount: bigint;
-  refundedFee: bigint;
+  refundedPlatformFee: bigint;
+  refundedRewardPoolFee: bigint;
   timestamp: bigint;
 };
 
@@ -40,7 +41,8 @@ export type StuckStakeClosedEventArgs = {
   stakeAccount: Address;
   stakeAccountId: number;
   refundedAmount: number | bigint;
-  refundedFee: number | bigint;
+  refundedPlatformFee: number | bigint;
+  refundedRewardPoolFee: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -51,7 +53,8 @@ export function getStuckStakeClosedEventEncoder(): FixedSizeEncoder<StuckStakeCl
     ['stakeAccount', getAddressEncoder()],
     ['stakeAccountId', getU32Encoder()],
     ['refundedAmount', getU64Encoder()],
-    ['refundedFee', getU64Encoder()],
+    ['refundedPlatformFee', getU64Encoder()],
+    ['refundedRewardPoolFee', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -63,7 +66,8 @@ export function getStuckStakeClosedEventDecoder(): FixedSizeDecoder<StuckStakeCl
     ['stakeAccount', getAddressDecoder()],
     ['stakeAccountId', getU32Decoder()],
     ['refundedAmount', getU64Decoder()],
-    ['refundedFee', getU64Decoder()],
+    ['refundedPlatformFee', getU64Decoder()],
+    ['refundedRewardPoolFee', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

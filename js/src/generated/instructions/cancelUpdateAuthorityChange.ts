@@ -52,7 +52,7 @@ export function getCancelUpdateAuthorityChangeDiscriminatorBytes() {
 export type CancelUpdateAuthorityChangeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountTimelockedChange extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -63,9 +63,9 @@ export type CancelUpdateAuthorityChangeInstruction<
         ? WritableSignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountPlatformConfig extends string
+        ? ReadonlyAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountTimelockedChange extends string
         ? WritableAccount<TAccountTimelockedChange>
         : TAccountTimelockedChange,
@@ -107,23 +107,23 @@ export function getCancelUpdateAuthorityChangeInstructionDataCodec(): FixedSizeC
 
 export type CancelUpdateAuthorityChangeAsyncInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState?: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange?: Address<TAccountTimelockedChange>;
 };
 
 export async function getCancelUpdateAuthorityChangeInstructionAsync<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: CancelUpdateAuthorityChangeAsyncInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
@@ -131,7 +131,7 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
   CancelUpdateAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >
 > {
@@ -142,7 +142,7 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -154,18 +154,6 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.timelockedChange.value) {
     accounts.timelockedChange.value = await getProgramDerivedAddress({
       programAddress,
@@ -182,7 +170,9 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
             116, 121,
           ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.centralState.value)),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
       ],
     });
   }
@@ -191,7 +181,7 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
     data: getCancelUpdateAuthorityChangeInstructionDataEncoder().encode({}),
@@ -199,37 +189,37 @@ export async function getCancelUpdateAuthorityChangeInstructionAsync<
   } as CancelUpdateAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
 
 export type CancelUpdateAuthorityChangeInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange: Address<TAccountTimelockedChange>;
 };
 
 export function getCancelUpdateAuthorityChangeInstruction<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: CancelUpdateAuthorityChangeInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
 ): CancelUpdateAuthorityChangeInstruction<
   TProgramAddress,
   TAccountSigner,
-  TAccountCentralState,
+  TAccountPlatformConfig,
   TAccountTimelockedChange
 > {
   // Program address.
@@ -239,7 +229,7 @@ export function getCancelUpdateAuthorityChangeInstruction<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -254,7 +244,7 @@ export function getCancelUpdateAuthorityChangeInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
     data: getCancelUpdateAuthorityChangeInstructionDataEncoder().encode({}),
@@ -262,7 +252,7 @@ export function getCancelUpdateAuthorityChangeInstruction<
   } as CancelUpdateAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
@@ -274,7 +264,7 @@ export type ParsedCancelUpdateAuthorityChangeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    centralState: TAccountMetas[1];
+    platformConfig: TAccountMetas[1];
     timelockedChange: TAccountMetas[2];
   };
   data: CancelUpdateAuthorityChangeInstructionData;
@@ -302,7 +292,7 @@ export function parseCancelUpdateAuthorityChangeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
-      centralState: getNextAccount(),
+      platformConfig: getNextAccount(),
       timelockedChange: getNextAccount(),
     },
     data: getCancelUpdateAuthorityChangeInstructionDataDecoder().decode(

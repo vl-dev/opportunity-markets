@@ -19,6 +19,7 @@ pub(crate) use emit_ts;
 pub struct MarketCreatedEvent {
     pub market: Pubkey,
     pub creator: Pubkey,
+    pub platform: Pubkey,
     pub index: u64,
     pub mint: Pubkey,
     pub time_to_stake: u64,
@@ -29,6 +30,8 @@ pub struct MarketCreatedEvent {
     pub unstake_delay_seconds: u64,
     pub allow_closing_early: bool,
     pub min_stake_amount: u64,
+    pub platform_fee_bp: u16,
+    pub reward_pool_fee_bp: u16,
     pub timestamp: i64,
 }
 
@@ -179,7 +182,8 @@ pub struct StakeAccountInitializedEvent {
 
 #[event]
 pub struct FeesClaimedEvent {
-    pub token_vault: Pubkey,
+    pub market: Pubkey,
+    pub platform: Pubkey,
     pub mint: Pubkey,
     pub destination: Pubkey,
     pub amount: u64,
@@ -187,8 +191,9 @@ pub struct FeesClaimedEvent {
 }
 
 #[event]
-pub struct TokenVaultInitializedEvent {
-    pub token_vault: Pubkey,
+pub struct AllowedMintInitializedEvent {
+    pub allowed_mint: Pubkey,
+    pub platform: Pubkey,
     pub mint: Pubkey,
     pub timestamp: i64,
 }
@@ -212,13 +217,14 @@ pub struct StuckStakeClosedEvent {
     pub stake_account: Pubkey,
     pub stake_account_id: u32,
     pub refunded_amount: u64,
-    pub refunded_fee: u64,
+    pub refunded_platform_fee: u64,
+    pub refunded_reward_pool_fee: u64,
     pub timestamp: i64,
 }
 
 #[event]
 pub struct AccountChangeProposedEvent {
-    pub central_state: Pubkey,
+    pub platform_config: Pubkey,
     pub change_type: String,
     pub current_value: Pubkey,
     pub proposed_value: Pubkey,
@@ -228,7 +234,7 @@ pub struct AccountChangeProposedEvent {
 
 #[event]
 pub struct AccountChangeFinalizedEvent {
-    pub central_state: Pubkey,
+    pub platform_config: Pubkey,
     pub change_type: String,
     pub old_value: Pubkey,
     pub new_value: Pubkey,
@@ -237,7 +243,7 @@ pub struct AccountChangeFinalizedEvent {
 
 #[event]
 pub struct AccountChangeCancelledEvent {
-    pub central_state: Pubkey,
+    pub platform_config: Pubkey,
     pub change_type: String,
     pub cancelled_by: Pubkey,
     pub proposed_value: Pubkey,

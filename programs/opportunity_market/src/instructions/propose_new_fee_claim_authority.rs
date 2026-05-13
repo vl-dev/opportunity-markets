@@ -1,30 +1,28 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{CENTRAL_STATE_SEED, FEE_CLAIMER_SEED, TIMELOCK_DELAY_SECONDS, TIMELOCKED_CHANGE_SEED};
+use crate::constants::{FEE_CLAIM_AUTHORITY_SEED, TIMELOCK_DELAY_SECONDS, TIMELOCKED_CHANGE_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, AccountChangeProposedEvent};
-use crate::state::{CentralState, TimelockedAccountChange};
+use crate::state::{PlatformConfig, TimelockedAccountChange};
 
 #[derive(Accounts)]
-pub struct ProposeNewFeeClaimer<'info> {
+pub struct ProposeNewFeeClaimAuthority<'info> {
     #[account(mut)]
     pub update_authority: Signer<'info>,
 
     #[account(
-        seeds = [CENTRAL_STATE_SEED],
-        bump = central_state.bump,
-        constraint = central_state.update_authority == update_authority.key() @ ErrorCode::Unauthorized,
+        has_one = update_authority @ ErrorCode::Unauthorized,
     )]
-    pub central_state: Account<'info, CentralState>,
+    pub platform_config: Account<'info, PlatformConfig>,
 
     /// CHECK: Stored as proposed value; must co-sign at finalize time.
-    pub proposed_fee_claimer: UncheckedAccount<'info>,
+    pub proposed_fee_claim_authority: UncheckedAccount<'info>,
 
     #[account(
         init,
         payer = update_authority,
         space = 8 + TimelockedAccountChange::INIT_SPACE,
-        seeds = [TIMELOCKED_CHANGE_SEED, FEE_CLAIMER_SEED, central_state.key().as_ref()],
+        seeds = [TIMELOCKED_CHANGE_SEED, FEE_CLAIM_AUTHORITY_SEED, platform_config.key().as_ref()],
         bump,
     )]
     pub timelocked_change: Account<'info, TimelockedAccountChange>,
@@ -32,7 +30,7 @@ pub struct ProposeNewFeeClaimer<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn propose_new_fee_claimer(ctx: Context<ProposeNewFeeClaimer>) -> Result<()> {
+pub fn propose_new_fee_claim_authority(ctx: Context<ProposeNewFeeClaimAuthority>) -> Result<()> {
     let clock = Clock::get()?;
     let execute_after = clock
         .unix_timestamp
@@ -41,13 +39,13 @@ pub fn propose_new_fee_claimer(ctx: Context<ProposeNewFeeClaimer>) -> Result<()>
 
     let change = &mut ctx.accounts.timelocked_change;
     change.bump = ctx.bumps.timelocked_change;
-    change.current_value = ctx.accounts.central_state.fee_claimer;
-    change.proposed_value = ctx.accounts.proposed_fee_claimer.key();
+    change.current_value = ctx.accounts.platform_config.fee_claim_authority;
+    change.proposed_value = ctx.accounts.proposed_fee_claim_authority.key();
     change.execute_after = execute_after;
 
     emit_ts!(AccountChangeProposedEvent {
-        central_state: ctx.accounts.central_state.key(),
-        change_type: "fee_claimer".to_string(),
+        platform_config: ctx.accounts.platform_config.key(),
+        change_type: "fee_claim_authority".to_string(),
         current_value: change.current_value,
         proposed_value: change.proposed_value,
         execute_after: execute_after,

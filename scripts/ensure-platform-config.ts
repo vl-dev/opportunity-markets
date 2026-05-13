@@ -14,8 +14,8 @@ import {
   type SolanaRpcApi,
   type Signature,
 } from "@solana/kit";
-import { ensureCentralState } from "../js/src";
-import config from "./centralState.json";
+import { ensurePlatformConfig } from "../js/src";
+import config from "./platformConfig.json";
 import * as fs from "fs";
 import * as os from "os";
 
@@ -58,29 +58,31 @@ async function main() {
   const payer = await createKeyPairSignerFromBytes(secretKey);
   const rpc = createSolanaRpc(RPC_URL);
 
-  const feeClaimer = config.feeClaimer ? address(config.feeClaimer) : payer.address;
+  const feeClaimAuthority = config.feeClaimAuthority ? address(config.feeClaimAuthority) : payer.address;
 
   const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
   const minTimeToRevealSeconds = BigInt(config.minTimeToRevealSeconds);
 
   console.log(`Program:                ${PROGRAM_ID}`);
   console.log(`Payer:                  ${payer.address}`);
-  console.log(`Protocol fee:           ${config.protocolFeeBp} bp`);
-  console.log(`Fee claimer:            ${feeClaimer}`);
+  console.log(`Platform fee:           ${config.platformFeeBp} bp`);
+  console.log(`Reward-pool fee:        ${config.rewardPoolFeeBp} bp`);
+  console.log(`Fee claim authority:    ${feeClaimAuthority}`);
   console.log(`Min time to stake (s):  ${minTimeToStakeSeconds}`);
   console.log(`Min time to reveal (s): ${minTimeToRevealSeconds}`);
 
-  const ix = await ensureCentralState(rpc, {
+  const ix = await ensurePlatformConfig(rpc, {
     programAddress: PROGRAM_ID,
     signer: payer,
-    protocolFeeBp: config.protocolFeeBp,
-    feeClaimer,
+    platformFeeBp: config.platformFeeBp,
+    rewardPoolFeeBp: config.rewardPoolFeeBp,
+    feeClaimAuthority,
     minTimeToStakeSeconds,
     minTimeToRevealSeconds,
   });
 
   if (!ix) {
-    console.log("\nCentral state already up to date.");
+    console.log("\nPlatform config already up to date.");
     return;
   }
 

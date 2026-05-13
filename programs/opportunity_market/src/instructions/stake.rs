@@ -5,10 +5,10 @@ use anchor_spl::token_interface::{
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
-use crate::constants::{STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
+use crate::constants::STAKE_ACCOUNT_SEED;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
-use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
+use crate::state::{OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -25,6 +25,7 @@ pub struct Stake<'info> {
     pub payer: Signer<'info>,
 
     #[account(
+        mut,
         constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
         constraint = market.selected_options.is_none() @ ErrorCode::WinnerAlreadySelected,
         constraint = !market.paused @ ErrorCode::MarketPaused,
@@ -54,25 +55,16 @@ pub struct Stake<'info> {
     )]
     pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Per-mint vault. Tracks `collected_fees` and owns `token_vault_ata`,
-    /// the single ATA holding all program-held tokens for this mint.
-    #[account(
-        mut,
-        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
-        bump = token_vault.bump,
-        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
-    )]
-    pub token_vault: Box<Account<'info, TokenVault>>,
-
-    /// Receives the full staked amount (net + fee). The fee portion is only
-    /// counted toward `token_vault.collected_fees` on a successful callback.
+    /// Market-owned ATA. Receives the full staked amount; fee accounting is
+    /// applied to `market.collected_platform_fees` and `market.reward_amount`
+    /// only on a successful stake_callback.
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = token_vault,
+        associated_token::authority = market,
         associated_token::token_program = token_program,
     )]
-    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -141,26 +133,35 @@ pub fn stake(
         ErrorCode::StakeWindowMismatch
     );
 
-    // Calculate fee from the market's snapshot of protocol_fee_bp (taken at create time).
-    let fee = (amount as u128)
-        .checked_mul(market.protocol_fee_bp as u128)
+    // Split fee: platform component + reward-pool component, both snapshotted
+    // on the market at create time.
+    let platform_fee = (amount as u128)
+        .checked_mul(market.platform_fee_bp as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(10_000)
         .ok_or(ErrorCode::Overflow)? as u64;
+    let reward_pool_fee = (amount as u128)
+        .checked_mul(market.reward_pool_fee_bp as u128)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::Overflow)? as u64;
+    let total_fee = platform_fee
+        .checked_add(reward_pool_fee)
+        .ok_or(ErrorCode::Overflow)?;
     let net_amount = amount
-        .checked_sub(fee)
+        .checked_sub(total_fee)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Move the full amount into the token vault ATA. Per-stake accounting on
-    // `stake_account.amount` / `stake_account.fee` is what controls how the
-    // tokens may flow back out (reclaim, reward payout, fee claim, refund).
+    // Move the full amount into the market's ATA. Per-stake accounting on
+    // `stake_account.amount` / `.platform_fee` / `.reward_pool_fee` controls
+    // how the tokens may flow back out (reclaim, reward payout, fee claim, refund).
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
                 from: ctx.accounts.signer_token_account.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
-                to: ctx.accounts.token_vault_ata.to_account_info(),
+                to: ctx.accounts.market_token_ata.to_account_info(),
                 authority: ctx.accounts.signer.to_account_info(),
             },
         ),
@@ -171,14 +172,15 @@ pub fn stake(
     // Set stake account fields
     ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
     ctx.accounts.stake_account.amount = net_amount;
-    ctx.accounts.stake_account.fee = fee;
+    ctx.accounts.stake_account.platform_fee = platform_fee;
+    ctx.accounts.stake_account.reward_pool_fee = reward_pool_fee;
     ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.state_nonce = state_nonce;
     ctx.accounts.stake_account.locked = true;
     ctx.accounts.stake_account.pending_stake = true;
 
     let stake_account_key = ctx.accounts.stake_account.key();
-    let token_vault_key = ctx.accounts.token_vault.key();
+    let market_key = ctx.accounts.market.key();
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
@@ -211,7 +213,7 @@ pub fn stake(
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: token_vault_key,
+                    pubkey: market_key,
                     is_writable: true,
                 },
             ],
@@ -242,12 +244,8 @@ pub struct StakeCallback<'info> {
     // Callback accounts
     #[account(mut)]
     pub stake_account: Box<Account<'info, StakeAccount>>,
-    #[account(
-        mut,
-        seeds = [TOKEN_VAULT_SEED, token_vault.mint.as_ref()],
-        bump = token_vault.bump,
-    )]
-    pub token_vault: Box<Account<'info, TokenVault>>,
+    #[account(mut)]
+    pub market: Box<Account<'info, OpportunityMarket>>,
 }
 
 pub fn stake_callback(
@@ -284,14 +282,21 @@ pub fn stake_callback(
     ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
     ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
-    // Count fee as collected only on successful stake. The fee tokens are
-    // already in `token_vault_ata` (mixed with stakes); this counter is what
-    // claim_fees uses to know how much of the ATA is fee-claimable.
-    let fee = ctx.accounts.stake_account.fee;
-    if fee > 0 {
-        ctx.accounts.token_vault.collected_fees = ctx.accounts.token_vault
-            .collected_fees
-            .checked_add(fee)
+    // Credit fees only on successful stake. The tokens are already in the
+    // market's ATA; these counters tell claim_fees and the reward distribution
+    // how much of the ATA balance belongs to which bucket.
+    let platform_fee = ctx.accounts.stake_account.platform_fee;
+    let reward_pool_fee = ctx.accounts.stake_account.reward_pool_fee;
+    if platform_fee > 0 {
+        ctx.accounts.market.collected_platform_fees = ctx.accounts.market
+            .collected_platform_fees
+            .checked_add(platform_fee)
+            .ok_or(ErrorCode::Overflow)?;
+    }
+    if reward_pool_fee > 0 {
+        ctx.accounts.market.reward_amount = ctx.accounts.market
+            .reward_amount
+            .checked_add(reward_pool_fee)
             .ok_or(ErrorCode::Overflow)?;
     }
 

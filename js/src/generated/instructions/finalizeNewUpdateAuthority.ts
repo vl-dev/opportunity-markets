@@ -53,7 +53,7 @@ export type FinalizeNewUpdateAuthorityInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountUpdateAuthority extends string | AccountMeta<string> = string,
   TAccountProposedAuthority extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountTimelockedChange extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -68,9 +68,9 @@ export type FinalizeNewUpdateAuthorityInstruction<
         ? ReadonlySignerAccount<TAccountProposedAuthority> &
             AccountSignerMeta<TAccountProposedAuthority>
         : TAccountProposedAuthority,
-      TAccountCentralState extends string
-        ? WritableAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountPlatformConfig extends string
+        ? WritableAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountTimelockedChange extends string
         ? WritableAccount<TAccountTimelockedChange>
         : TAccountTimelockedChange,
@@ -113,27 +113,27 @@ export function getFinalizeNewUpdateAuthorityInstructionDataCodec(): FixedSizeCo
 export type FinalizeNewUpdateAuthorityAsyncInput<
   TAccountUpdateAuthority extends string = string,
   TAccountProposedAuthority extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   /** The proposed new authority must co-sign to prevent fat-finger mistakes. */
   proposedAuthority: TransactionSigner<TAccountProposedAuthority>;
-  centralState?: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange?: Address<TAccountTimelockedChange>;
 };
 
 export async function getFinalizeNewUpdateAuthorityInstructionAsync<
   TAccountUpdateAuthority extends string,
   TAccountProposedAuthority extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: FinalizeNewUpdateAuthorityAsyncInput<
     TAccountUpdateAuthority,
     TAccountProposedAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
@@ -142,7 +142,7 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountProposedAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >
 > {
@@ -157,7 +157,7 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
       value: input.proposedAuthority ?? null,
       isWritable: false,
     },
-    centralState: { value: input.centralState ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -169,18 +169,6 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.timelockedChange.value) {
     accounts.timelockedChange.value = await getProgramDerivedAddress({
       programAddress,
@@ -197,7 +185,9 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
             116, 121,
           ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.centralState.value)),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
       ],
     });
   }
@@ -207,7 +197,7 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
     accounts: [
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.proposedAuthority),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
     data: getFinalizeNewUpdateAuthorityInstructionDataEncoder().encode({}),
@@ -216,7 +206,7 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountProposedAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
@@ -224,27 +214,27 @@ export async function getFinalizeNewUpdateAuthorityInstructionAsync<
 export type FinalizeNewUpdateAuthorityInput<
   TAccountUpdateAuthority extends string = string,
   TAccountProposedAuthority extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   /** The proposed new authority must co-sign to prevent fat-finger mistakes. */
   proposedAuthority: TransactionSigner<TAccountProposedAuthority>;
-  centralState: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange: Address<TAccountTimelockedChange>;
 };
 
 export function getFinalizeNewUpdateAuthorityInstruction<
   TAccountUpdateAuthority extends string,
   TAccountProposedAuthority extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: FinalizeNewUpdateAuthorityInput<
     TAccountUpdateAuthority,
     TAccountProposedAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
@@ -252,7 +242,7 @@ export function getFinalizeNewUpdateAuthorityInstruction<
   TProgramAddress,
   TAccountUpdateAuthority,
   TAccountProposedAuthority,
-  TAccountCentralState,
+  TAccountPlatformConfig,
   TAccountTimelockedChange
 > {
   // Program address.
@@ -266,7 +256,7 @@ export function getFinalizeNewUpdateAuthorityInstruction<
       value: input.proposedAuthority ?? null,
       isWritable: false,
     },
-    centralState: { value: input.centralState ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -282,7 +272,7 @@ export function getFinalizeNewUpdateAuthorityInstruction<
     accounts: [
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.proposedAuthority),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
     data: getFinalizeNewUpdateAuthorityInstructionDataEncoder().encode({}),
@@ -291,7 +281,7 @@ export function getFinalizeNewUpdateAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountProposedAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
@@ -305,7 +295,7 @@ export type ParsedFinalizeNewUpdateAuthorityInstruction<
     updateAuthority: TAccountMetas[0];
     /** The proposed new authority must co-sign to prevent fat-finger mistakes. */
     proposedAuthority: TAccountMetas[1];
-    centralState: TAccountMetas[2];
+    platformConfig: TAccountMetas[2];
     timelockedChange: TAccountMetas[3];
   };
   data: FinalizeNewUpdateAuthorityInstructionData;
@@ -334,7 +324,7 @@ export function parseFinalizeNewUpdateAuthorityInstruction<
     accounts: {
       updateAuthority: getNextAccount(),
       proposedAuthority: getNextAccount(),
-      centralState: getNextAccount(),
+      platformConfig: getNextAccount(),
       timelockedChange: getNextAccount(),
     },
     data: getFinalizeNewUpdateAuthorityInstructionDataDecoder().decode(

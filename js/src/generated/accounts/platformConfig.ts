@@ -41,118 +41,130 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 
-export const CENTRAL_STATE_DISCRIMINATOR = new Uint8Array([
-  201, 49, 35, 231, 4, 164, 205, 91,
+export const PLATFORM_CONFIG_DISCRIMINATOR = new Uint8Array([
+  160, 78, 128, 0, 248, 83, 230, 160,
 ]);
 
-export function getCentralStateDiscriminatorBytes() {
+export function getPlatformConfigDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CENTRAL_STATE_DISCRIMINATOR
+    PLATFORM_CONFIG_DISCRIMINATOR
   );
 }
 
-export type CentralState = {
+export type PlatformConfig = {
   discriminator: ReadonlyUint8Array;
   bump: number;
   updateAuthority: Address;
-  protocolFeeBp: number;
-  feeClaimer: Address;
+  feeClaimAuthority: Address;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
 };
 
-export type CentralStateArgs = {
+export type PlatformConfigArgs = {
   bump: number;
   updateAuthority: Address;
-  protocolFeeBp: number;
-  feeClaimer: Address;
+  feeClaimAuthority: Address;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
 };
 
-export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
+export function getPlatformConfigEncoder(): FixedSizeEncoder<PlatformConfigArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
       ['updateAuthority', getAddressEncoder()],
-      ['protocolFeeBp', getU16Encoder()],
-      ['feeClaimer', getAddressEncoder()],
+      ['feeClaimAuthority', getAddressEncoder()],
+      ['platformFeeBp', getU16Encoder()],
+      ['rewardPoolFeeBp', getU16Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: CENTRAL_STATE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: PLATFORM_CONFIG_DISCRIMINATOR })
   );
 }
 
-export function getCentralStateDecoder(): FixedSizeDecoder<CentralState> {
+export function getPlatformConfigDecoder(): FixedSizeDecoder<PlatformConfig> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
     ['updateAuthority', getAddressDecoder()],
-    ['protocolFeeBp', getU16Decoder()],
-    ['feeClaimer', getAddressDecoder()],
+    ['feeClaimAuthority', getAddressDecoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
   ]);
 }
 
-export function getCentralStateCodec(): FixedSizeCodec<
-  CentralStateArgs,
-  CentralState
+export function getPlatformConfigCodec(): FixedSizeCodec<
+  PlatformConfigArgs,
+  PlatformConfig
 > {
-  return combineCodec(getCentralStateEncoder(), getCentralStateDecoder());
+  return combineCodec(getPlatformConfigEncoder(), getPlatformConfigDecoder());
 }
 
-export function decodeCentralState<TAddress extends string = string>(
+export function decodePlatformConfig<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<CentralState, TAddress>;
-export function decodeCentralState<TAddress extends string = string>(
+): Account<PlatformConfig, TAddress>;
+export function decodePlatformConfig<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<CentralState, TAddress>;
-export function decodeCentralState<TAddress extends string = string>(
+): MaybeAccount<PlatformConfig, TAddress>;
+export function decodePlatformConfig<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<CentralState, TAddress> | MaybeAccount<CentralState, TAddress> {
+): Account<PlatformConfig, TAddress> | MaybeAccount<PlatformConfig, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getCentralStateDecoder()
+    getPlatformConfigDecoder()
   );
 }
 
-export async function fetchCentralState<TAddress extends string = string>(
+export async function fetchPlatformConfig<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<CentralState, TAddress>> {
-  const maybeAccount = await fetchMaybeCentralState(rpc, address, config);
+): Promise<Account<PlatformConfig, TAddress>> {
+  const maybeAccount = await fetchMaybePlatformConfig(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeCentralState<TAddress extends string = string>(
+export async function fetchMaybePlatformConfig<
+  TAddress extends string = string,
+>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<CentralState, TAddress>> {
+): Promise<MaybeAccount<PlatformConfig, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeCentralState(maybeAccount);
+  return decodePlatformConfig(maybeAccount);
 }
 
-export async function fetchAllCentralState(
+export async function fetchAllPlatformConfig(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<CentralState>[]> {
-  const maybeAccounts = await fetchAllMaybeCentralState(rpc, addresses, config);
+): Promise<Account<PlatformConfig>[]> {
+  const maybeAccounts = await fetchAllMaybePlatformConfig(
+    rpc,
+    addresses,
+    config
+  );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeCentralState(
+export async function fetchAllMaybePlatformConfig(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<CentralState>[]> {
+): Promise<MaybeAccount<PlatformConfig>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeCentralState(maybeAccount));
+  return maybeAccounts.map((maybeAccount) =>
+    decodePlatformConfig(maybeAccount)
+  );
 }

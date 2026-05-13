@@ -39,20 +39,20 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const CANCEL_FEE_CLAIMER_CHANGE_DISCRIMINATOR = new Uint8Array([
-  74, 3, 53, 191, 222, 247, 196, 164,
+export const CANCEL_FEE_CLAIM_AUTHORITY_CHANGE_DISCRIMINATOR = new Uint8Array([
+  158, 0, 189, 141, 126, 74, 140, 189,
 ]);
 
-export function getCancelFeeClaimerChangeDiscriminatorBytes() {
+export function getCancelFeeClaimAuthorityChangeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CANCEL_FEE_CLAIMER_CHANGE_DISCRIMINATOR
+    CANCEL_FEE_CLAIM_AUTHORITY_CHANGE_DISCRIMINATOR
   );
 }
 
-export type CancelFeeClaimerChangeInstruction<
+export type CancelFeeClaimAuthorityChangeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountTimelockedChange extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -63,9 +63,9 @@ export type CancelFeeClaimerChangeInstruction<
         ? WritableSignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountPlatformConfig extends string
+        ? ReadonlyAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountTimelockedChange extends string
         ? WritableAccount<TAccountTimelockedChange>
         : TAccountTimelockedChange,
@@ -73,65 +73,65 @@ export type CancelFeeClaimerChangeInstruction<
     ]
   >;
 
-export type CancelFeeClaimerChangeInstructionData = {
+export type CancelFeeClaimAuthorityChangeInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type CancelFeeClaimerChangeInstructionDataArgs = {};
+export type CancelFeeClaimAuthorityChangeInstructionDataArgs = {};
 
-export function getCancelFeeClaimerChangeInstructionDataEncoder(): FixedSizeEncoder<CancelFeeClaimerChangeInstructionDataArgs> {
+export function getCancelFeeClaimAuthorityChangeInstructionDataEncoder(): FixedSizeEncoder<CancelFeeClaimAuthorityChangeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({
       ...value,
-      discriminator: CANCEL_FEE_CLAIMER_CHANGE_DISCRIMINATOR,
+      discriminator: CANCEL_FEE_CLAIM_AUTHORITY_CHANGE_DISCRIMINATOR,
     })
   );
 }
 
-export function getCancelFeeClaimerChangeInstructionDataDecoder(): FixedSizeDecoder<CancelFeeClaimerChangeInstructionData> {
+export function getCancelFeeClaimAuthorityChangeInstructionDataDecoder(): FixedSizeDecoder<CancelFeeClaimAuthorityChangeInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getCancelFeeClaimerChangeInstructionDataCodec(): FixedSizeCodec<
-  CancelFeeClaimerChangeInstructionDataArgs,
-  CancelFeeClaimerChangeInstructionData
+export function getCancelFeeClaimAuthorityChangeInstructionDataCodec(): FixedSizeCodec<
+  CancelFeeClaimAuthorityChangeInstructionDataArgs,
+  CancelFeeClaimAuthorityChangeInstructionData
 > {
   return combineCodec(
-    getCancelFeeClaimerChangeInstructionDataEncoder(),
-    getCancelFeeClaimerChangeInstructionDataDecoder()
+    getCancelFeeClaimAuthorityChangeInstructionDataEncoder(),
+    getCancelFeeClaimAuthorityChangeInstructionDataDecoder()
   );
 }
 
-export type CancelFeeClaimerChangeAsyncInput<
+export type CancelFeeClaimAuthorityChangeAsyncInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState?: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange?: Address<TAccountTimelockedChange>;
 };
 
-export async function getCancelFeeClaimerChangeInstructionAsync<
+export async function getCancelFeeClaimAuthorityChangeInstructionAsync<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CancelFeeClaimerChangeAsyncInput<
+  input: CancelFeeClaimAuthorityChangeAsyncInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  CancelFeeClaimerChangeInstruction<
+  CancelFeeClaimAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >
 > {
@@ -142,7 +142,7 @@ export async function getCancelFeeClaimerChangeInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -154,18 +154,6 @@ export async function getCancelFeeClaimerChangeInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.timelockedChange.value) {
     accounts.timelockedChange.value = await getProgramDerivedAddress({
       programAddress,
@@ -177,9 +165,14 @@ export async function getCancelFeeClaimerChangeInstructionAsync<
           ])
         ),
         getBytesEncoder().encode(
-          new Uint8Array([102, 101, 101, 95, 99, 108, 97, 105, 109, 101, 114])
+          new Uint8Array([
+            102, 101, 101, 95, 99, 108, 97, 105, 109, 95, 97, 117, 116, 104,
+            111, 114, 105, 116, 121,
+          ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.centralState.value)),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
       ],
     });
   }
@@ -188,45 +181,45 @@ export async function getCancelFeeClaimerChangeInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
-    data: getCancelFeeClaimerChangeInstructionDataEncoder().encode({}),
+    data: getCancelFeeClaimAuthorityChangeInstructionDataEncoder().encode({}),
     programAddress,
-  } as CancelFeeClaimerChangeInstruction<
+  } as CancelFeeClaimAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
 
-export type CancelFeeClaimerChangeInput<
+export type CancelFeeClaimAuthorityChangeInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange: Address<TAccountTimelockedChange>;
 };
 
-export function getCancelFeeClaimerChangeInstruction<
+export function getCancelFeeClaimAuthorityChangeInstruction<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CancelFeeClaimerChangeInput<
+  input: CancelFeeClaimAuthorityChangeInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
-): CancelFeeClaimerChangeInstruction<
+): CancelFeeClaimAuthorityChangeInstruction<
   TProgramAddress,
   TAccountSigner,
-  TAccountCentralState,
+  TAccountPlatformConfig,
   TAccountTimelockedChange
 > {
   // Program address.
@@ -236,7 +229,7 @@ export function getCancelFeeClaimerChangeInstruction<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
@@ -251,40 +244,40 @@ export function getCancelFeeClaimerChangeInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
     ],
-    data: getCancelFeeClaimerChangeInstructionDataEncoder().encode({}),
+    data: getCancelFeeClaimAuthorityChangeInstructionDataEncoder().encode({}),
     programAddress,
-  } as CancelFeeClaimerChangeInstruction<
+  } as CancelFeeClaimAuthorityChangeInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountTimelockedChange
   >);
 }
 
-export type ParsedCancelFeeClaimerChangeInstruction<
+export type ParsedCancelFeeClaimAuthorityChangeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    centralState: TAccountMetas[1];
+    platformConfig: TAccountMetas[1];
     timelockedChange: TAccountMetas[2];
   };
-  data: CancelFeeClaimerChangeInstructionData;
+  data: CancelFeeClaimAuthorityChangeInstructionData;
 };
 
-export function parseCancelFeeClaimerChangeInstruction<
+export function parseCancelFeeClaimAuthorityChangeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedCancelFeeClaimerChangeInstruction<TProgram, TAccountMetas> {
+): ParsedCancelFeeClaimAuthorityChangeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -299,10 +292,10 @@ export function parseCancelFeeClaimerChangeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
-      centralState: getNextAccount(),
+      platformConfig: getNextAccount(),
       timelockedChange: getNextAccount(),
     },
-    data: getCancelFeeClaimerChangeInstructionDataDecoder().decode(
+    data: getCancelFeeClaimAuthorityChangeInstructionDataDecoder().decode(
       instruction.data
     ),
   };

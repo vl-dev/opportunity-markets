@@ -1,10 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { address, some, isNone, isSome, unwrapOption, createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory } from "@solana/kit";
-import { fetchToken, findAssociatedTokenPda, getTransferInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { fetchToken } from "@solana-program/token";
 import { expect } from "chai";
-import { deserializeLE } from "@arcium-hq/client";
-import { randomBytes } from "crypto";
 import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH,
@@ -12,15 +10,13 @@ import {
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
-  fetchStakeAccount,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
 import { TestRunner } from "./utils/test-runner";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
-import { generateX25519Keypair, X25519Keypair, createCipher, nonceToBytes } from "../js/src/x25519/keypair";
-import { sendTransaction } from "./utils/transaction";
+import { generateX25519Keypair, X25519Keypair } from "../js/src/x25519/keypair";
 import { shouldThrowCustomError } from "./utils/errors";
 import * as fs from "fs";
 import * as os from "os";
@@ -189,7 +185,7 @@ describe("OpportunityMarket", () => {
 
     // Get token balances before closing (after reclaim, so only reward transfer remains)
     const rpc = runner.getRpc();
-    const marketAta = await runner.getTokenVaultAta();
+    const marketAta = await runner.getMarketAta();
 
     const balancesBefore = await Promise.all(
       winners.map(async (userId) => ({
@@ -265,9 +261,9 @@ describe("OpportunityMarket", () => {
 
     // Verify the fee vault has collected fees
     const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const vaultBefore = await runner.fetchTokenVault();
-    expect(vaultBefore.data.collectedFees).to.equal(totalExpectedFees,
-      `Fee vault should have collected ${totalExpectedFees} in fees`);
+    const marketBefore = await runner.fetchMarket();
+    expect(marketBefore.data.collectedPlatformFees).to.equal(totalExpectedFees,
+      `Market should have collected ${totalExpectedFees} in platform fees`);
 
     // Get fee recipient balance before claiming
     const feeRecipientBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
@@ -280,9 +276,8 @@ describe("OpportunityMarket", () => {
     expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedFees,
       `Fee recipient should have received ${totalExpectedFees} in fees`);
 
-    // Verify fee vault counter reset to 0
-    const vaultAfter = await runner.fetchTokenVault();
-    expect(vaultAfter.data.collectedFees).to.equal(0n, "Fee vault collected fees should be 0 after claiming");
+    const marketAfter = await runner.fetchMarket();
+    expect(marketAfter.data.collectedPlatformFees).to.equal(0n, "Market collected platform fees should be 0 after claiming");
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -543,7 +538,7 @@ describe("OpportunityMarket", () => {
     // Get balances before closing
     const rpc = runner.getRpc();
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getTokenVaultAta();
+    const marketAta = await runner.getMarketAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close ALL stake accounts (both winning and losing)
@@ -582,14 +577,11 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    // After all reclaims + reward payouts the only thing left in the
-    // token vault ATA is the collected protocol fees (which sit there
-    // until claim_fees runs).
-    const vaultAfter = await runner.fetchTokenVault();
-    const collectedFees = vaultAfter.data.collectedFees;
+    const marketStateAfter = await runner.fetchMarket();
+    const collectedFees = marketStateAfter.data.collectedPlatformFees;
     expect(
       marketBalanceAfter <= collectedFees + 1n,
-      `Token vault ATA should hold only collected fees (~${collectedFees}), has ${marketBalanceAfter}`
+      `Market ATA should hold only collected platform fees (~${collectedFees}), has ${marketBalanceAfter}`
     ).to.be.true;
   });
 
@@ -910,7 +902,7 @@ describe("OpportunityMarket", () => {
     expect(unlockedBalanceBefore - unlockedBalanceAfterAdd).to.equal(unlockedAmount);
 
     // Verify market ATA holds total reward
-    const marketAta = await runner.getTokenVaultAta();
+    const marketAta = await runner.getMarketAta();
     const marketAtaBalance = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketAtaBalance).to.equal(lockedAmount + unlockedAmount);
 
@@ -964,9 +956,9 @@ describe("OpportunityMarket", () => {
 
     // Record balances before
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const tokenVaultAta = await runner.getTokenVaultAta();
+    const tokenVaultAta = await runner.getMarketAta();
     const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    const vaultBefore = await runner.fetchTokenVault();
+    const vaultBefore = await runner.fetchMarket();
 
     // Stake and immediately close stuck in the same transaction
     const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
@@ -986,10 +978,9 @@ describe("OpportunityMarket", () => {
     expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
       "Token vault ATA balance should be unchanged");
 
-    // Verify token vault collected_fees was NOT incremented (fee never counted as collected)
-    const vaultAfter = await runner.fetchTokenVault();
-    expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
-      "Token vault collected_fees should not have changed");
+    const vaultAfter = await runner.fetchMarket();
+    expect(vaultAfter.data.collectedPlatformFees).to.equal(vaultBefore.data.collectedPlatformFees,
+      "Market collected_platform_fees should not have changed");
   });
 
   it("pausing blocks staking, resuming allows it again", async () => {

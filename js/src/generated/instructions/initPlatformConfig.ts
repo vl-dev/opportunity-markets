@@ -38,23 +38,26 @@ import {
   type WritableSignerAccount,
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  expectAddress,
+  getAccountMetaFactory,
+  type ResolvedAccount,
+} from '../shared';
 
-export const INIT_CENTRAL_STATE_DISCRIMINATOR = new Uint8Array([
-  132, 108, 150, 180, 190, 48, 103, 90,
+export const INIT_PLATFORM_CONFIG_DISCRIMINATOR = new Uint8Array([
+  101, 52, 47, 49, 156, 16, 32, 118,
 ]);
 
-export function getInitCentralStateDiscriminatorBytes() {
+export function getInitPlatformConfigDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    INIT_CENTRAL_STATE_DISCRIMINATOR
+    INIT_PLATFORM_CONFIG_DISCRIMINATOR
   );
 }
 
-export type InitCentralStateInstruction<
+export type InitPlatformConfigInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountPayer extends string | AccountMeta<string> =
-    'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq',
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -66,9 +69,9 @@ export type InitCentralStateInstruction<
         ? WritableSignerAccount<TAccountPayer> &
             AccountSignerMeta<TAccountPayer>
         : TAccountPayer,
-      TAccountCentralState extends string
-        ? WritableAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountPlatformConfig extends string
+        ? WritableAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -76,85 +79,90 @@ export type InitCentralStateInstruction<
     ]
   >;
 
-export type InitCentralStateInstructionData = {
+export type InitPlatformConfigInstructionData = {
   discriminator: ReadonlyUint8Array;
-  protocolFeeBp: number;
-  feeClaimer: Address;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
 };
 
-export type InitCentralStateInstructionDataArgs = {
-  protocolFeeBp: number;
-  feeClaimer: Address;
+export type InitPlatformConfigInstructionDataArgs = {
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  feeClaimAuthority: Address;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
 };
 
-export function getInitCentralStateInstructionDataEncoder(): FixedSizeEncoder<InitCentralStateInstructionDataArgs> {
+export function getInitPlatformConfigInstructionDataEncoder(): FixedSizeEncoder<InitPlatformConfigInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['protocolFeeBp', getU16Encoder()],
-      ['feeClaimer', getAddressEncoder()],
+      ['platformFeeBp', getU16Encoder()],
+      ['rewardPoolFeeBp', getU16Encoder()],
+      ['feeClaimAuthority', getAddressEncoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: INIT_CENTRAL_STATE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: INIT_PLATFORM_CONFIG_DISCRIMINATOR })
   );
 }
 
-export function getInitCentralStateInstructionDataDecoder(): FixedSizeDecoder<InitCentralStateInstructionData> {
+export function getInitPlatformConfigInstructionDataDecoder(): FixedSizeDecoder<InitPlatformConfigInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['protocolFeeBp', getU16Decoder()],
-    ['feeClaimer', getAddressDecoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
+    ['feeClaimAuthority', getAddressDecoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
   ]);
 }
 
-export function getInitCentralStateInstructionDataCodec(): FixedSizeCodec<
-  InitCentralStateInstructionDataArgs,
-  InitCentralStateInstructionData
+export function getInitPlatformConfigInstructionDataCodec(): FixedSizeCodec<
+  InitPlatformConfigInstructionDataArgs,
+  InitPlatformConfigInstructionData
 > {
   return combineCodec(
-    getInitCentralStateInstructionDataEncoder(),
-    getInitCentralStateInstructionDataDecoder()
+    getInitPlatformConfigInstructionDataEncoder(),
+    getInitPlatformConfigInstructionDataDecoder()
   );
 }
 
-export type InitCentralStateAsyncInput<
+export type InitPlatformConfigAsyncInput<
   TAccountPayer extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer?: TransactionSigner<TAccountPayer>;
-  centralState?: Address<TAccountCentralState>;
+  payer: TransactionSigner<TAccountPayer>;
+  platformConfig?: Address<TAccountPlatformConfig>;
   systemProgram?: Address<TAccountSystemProgram>;
-  protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
-  minTimeToStakeSeconds: InitCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
-  minTimeToRevealSeconds: InitCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
+  platformFeeBp: InitPlatformConfigInstructionDataArgs['platformFeeBp'];
+  rewardPoolFeeBp: InitPlatformConfigInstructionDataArgs['rewardPoolFeeBp'];
+  feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
+  minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
-export async function getInitCentralStateInstructionAsync<
+export async function getInitPlatformConfigInstructionAsync<
   TAccountPayer extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: InitCentralStateAsyncInput<
+  input: InitPlatformConfigAsyncInput<
     TAccountPayer,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  InitCentralStateInstruction<
+  InitPlatformConfigInstruction<
     TProgramAddress,
     TAccountPayer,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountSystemProgram
   >
 > {
@@ -165,7 +173,7 @@ export async function getInitCentralStateInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     payer: { value: input.payer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -177,19 +185,17 @@ export async function getInitCentralStateInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.payer.value) {
-    accounts.payer.value =
-      'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq' as Address<'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq'>;
-  }
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
+  if (!accounts.platformConfig.value) {
+    accounts.platformConfig.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
+            112, 108, 97, 116, 102, 111, 114, 109, 95, 99, 111, 110, 102, 105,
+            103,
           ])
         ),
+        getAddressEncoder().encode(expectAddress(accounts.payer.value)),
       ],
     });
   }
@@ -202,51 +208,52 @@ export async function getInitCentralStateInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitCentralStateInstructionDataEncoder().encode(
-      args as InitCentralStateInstructionDataArgs
+    data: getInitPlatformConfigInstructionDataEncoder().encode(
+      args as InitPlatformConfigInstructionDataArgs
     ),
     programAddress,
-  } as InitCentralStateInstruction<
+  } as InitPlatformConfigInstruction<
     TProgramAddress,
     TAccountPayer,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountSystemProgram
   >);
 }
 
-export type InitCentralStateInput<
+export type InitPlatformConfigInput<
   TAccountPayer extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer?: TransactionSigner<TAccountPayer>;
-  centralState: Address<TAccountCentralState>;
+  payer: TransactionSigner<TAccountPayer>;
+  platformConfig: Address<TAccountPlatformConfig>;
   systemProgram?: Address<TAccountSystemProgram>;
-  protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
-  minTimeToStakeSeconds: InitCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
-  minTimeToRevealSeconds: InitCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
+  platformFeeBp: InitPlatformConfigInstructionDataArgs['platformFeeBp'];
+  rewardPoolFeeBp: InitPlatformConfigInstructionDataArgs['rewardPoolFeeBp'];
+  feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
+  minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
-export function getInitCentralStateInstruction<
+export function getInitPlatformConfigInstruction<
   TAccountPayer extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: InitCentralStateInput<
+  input: InitPlatformConfigInput<
     TAccountPayer,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): InitCentralStateInstruction<
+): InitPlatformConfigInstruction<
   TProgramAddress,
   TAccountPayer,
-  TAccountCentralState,
+  TAccountPlatformConfig,
   TAccountSystemProgram
 > {
   // Program address.
@@ -256,7 +263,7 @@ export function getInitCentralStateInstruction<
   // Original accounts.
   const originalAccounts = {
     payer: { value: input.payer ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -268,10 +275,6 @@ export function getInitCentralStateInstruction<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.payer.value) {
-    accounts.payer.value =
-      'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq' as Address<'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq'>;
-  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -281,42 +284,42 @@ export function getInitCentralStateInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.payer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitCentralStateInstructionDataEncoder().encode(
-      args as InitCentralStateInstructionDataArgs
+    data: getInitPlatformConfigInstructionDataEncoder().encode(
+      args as InitPlatformConfigInstructionDataArgs
     ),
     programAddress,
-  } as InitCentralStateInstruction<
+  } as InitPlatformConfigInstruction<
     TProgramAddress,
     TAccountPayer,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedInitCentralStateInstruction<
+export type ParsedInitPlatformConfigInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     payer: TAccountMetas[0];
-    centralState: TAccountMetas[1];
+    platformConfig: TAccountMetas[1];
     systemProgram: TAccountMetas[2];
   };
-  data: InitCentralStateInstructionData;
+  data: InitPlatformConfigInstructionData;
 };
 
-export function parseInitCentralStateInstruction<
+export function parseInitPlatformConfigInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedInitCentralStateInstruction<TProgram, TAccountMetas> {
+): ParsedInitPlatformConfigInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -331,9 +334,11 @@ export function parseInitCentralStateInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       payer: getNextAccount(),
-      centralState: getNextAccount(),
+      platformConfig: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getInitCentralStateInstructionDataDecoder().decode(instruction.data),
+    data: getInitPlatformConfigInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

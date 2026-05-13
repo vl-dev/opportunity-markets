@@ -23,15 +23,13 @@ import {
 import {
   createMarket,
   fetchOpportunityMarket,
-  fetchTokenVault,
-  getTokenVaultAddress,
+  getPlatformConfigAddress,
   getClaimFeesInstructionAsync,
   randomComputationOffset,
-  randomStateNonce,
-  ensureCentralState,
+  ensurePlatformConfig,
   addMarketOption,
   initStakeAccount,
-  initTokenVault,
+  initAllowedMint,
   stake as stakeIx,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
@@ -53,6 +51,7 @@ import {
   fetchStakeAccount,
   getOpportunityMarketOptionAddress,
   fetchOpportunityMarketOption,
+  getOpportunityMarketAddress,
 } from "../../js/src";
 import { randomBytes } from "crypto";
 import * as anchor from "@coral-xyz/anchor";
@@ -196,6 +195,7 @@ export class TestRunner {
   // Market
   private mint: KeyPairSigner;
   private marketAddress: Address;
+  private platformConfigAddress: Address;
   private marketCreator: TestUser;
   private marketConfig: MarketConfig;
   private usedOptionIds: Set<number>;
@@ -257,8 +257,6 @@ export class TestRunner {
     });
     const accounts = await Promise.all(accountPromises);
 
-    // Split into participants and creator
-    const participantAccounts = accounts.slice(0, numParticipants);
     const creatorAccountBase = accounts[numParticipants];
 
     // Airdrop to all accounts in parallel
@@ -272,24 +270,26 @@ export class TestRunner {
     );
     await Promise.all(airdropPromises);
 
-    // Initialize or update central state (use stable deployer key as authority)
+    // The deployer keypair owns the platform (stable across tests so the
+    // PDA stays the same).
     const deployer = await getDeployerKeypair();
-    const centralStateIx = await ensureCentralState(runner.rpc, {
-      signer: deployer,
-      protocolFeeBp: 100,
-      feeClaimer: creatorAccountBase.keypair.address,
+    const [platformConfigAddress] = await getPlatformConfigAddress(deployer.address, programId);
+    runner.platformConfigAddress = platformConfigAddress;
 
-      // Tests use short windows.
+    const platformConfigIx = await ensurePlatformConfig(runner.rpc, {
+      signer: deployer,
+      platformFeeBp: 100,
+      rewardPoolFeeBp: 0,
+      feeClaimAuthority: creatorAccountBase.keypair.address,
       minTimeToStakeSeconds: 1n,
       minTimeToRevealSeconds: 1n,
     });
-    if (centralStateIx) {
-      await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {
-        label: "Ensure central state",
+    if (platformConfigIx) {
+      await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
+        label: "Ensure platform config",
       });
     }
 
-    // Create SPL token mint (creator is mint authority)
     console.log("Creating SPL token mint...");
     runner.mint = await createTokenMint(
       runner.rpc,
@@ -299,16 +299,14 @@ export class TestRunner {
     );
     console.log(`  Mint created: ${runner.mint.address}`);
 
-    // Init the per-mint token vault (PDA + ATA in one ix). The vault's
-    // existence whitelists the mint for create_market.
-    console.log("Initializing token vault...");
-    const initTokenVaultIx = await initTokenVault({
+    console.log("Whitelisting mint on platform...");
+    const initAllowedMintIx = await initAllowedMint({
       updateAuthority: deployer,
+      platformConfig: platformConfigAddress,
       tokenMint: runner.mint.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initTokenVaultIx], {
-      label: "Init token vault",
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initAllowedMintIx], {
+      label: "Init allowed mint",
     });
 
     // Create ATAs and mint tokens for all accounts
@@ -373,7 +371,9 @@ export class TestRunner {
 
     const createMarketIx = await createMarket({
       creator: runner.marketCreator.solanaKeypair,
+      platformConfig: runner.platformConfigAddress,
       tokenMint: runner.mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
@@ -390,8 +390,12 @@ export class TestRunner {
       label: "Create market",
     });
 
-    // Get market address from the instruction accounts
-    runner.marketAddress = createMarketIx.accounts[2].address as Address;
+    const [derivedMarket] = await getOpportunityMarketAddress(
+      runner.marketCreator.solanaKeypair.address,
+      marketIndex,
+      programId,
+    );
+    runner.marketAddress = derivedMarket;
     console.log(`  Market created: ${runner.marketAddress}`);
 
     // Add initial reward from creator if configured
@@ -939,6 +943,8 @@ export class TestRunner {
   async claimFees(): Promise<void> {
     const ix = await getClaimFeesInstructionAsync({
       signer: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+      platformConfig: this.platformConfigAddress,
       tokenMint: this.mint.address,
       destinationTokenAccount: this.marketCreator.tokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
@@ -977,9 +983,8 @@ export class TestRunner {
     return fetchOpportunityMarket(this.rpc, this.marketAddress);
   }
 
-  async fetchTokenVault() {
-    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
-    return fetchTokenVault(this.rpc, tokenVaultAddress);
+  get platformConfig(): Address {
+    return this.platformConfigAddress;
   }
 
   getMxePublicKey(): Uint8Array {
@@ -1063,14 +1068,13 @@ export class TestRunner {
     return this.marketConfig.unstakeDelaySeconds;
   }
 
-  async getTokenVaultAta(): Promise<Address> {
-    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
-    const [tokenVaultAta] = await findAssociatedTokenPda({
+  async getMarketAta(): Promise<Address> {
+    const [ata] = await findAssociatedTokenPda({
       mint: this.mint.address,
-      owner: tokenVaultAddress,
+      owner: this.marketAddress,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    return tokenVaultAta;
+    return ata;
   }
 
   async getStakeAccountAddress(userId: Address, stakeAccountId: number): Promise<Address> {

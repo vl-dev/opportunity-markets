@@ -2,22 +2,35 @@ use anchor_lang::prelude::*;
 
 #[account]
 #[derive(InitSpace)]
-pub struct CentralState {
+pub struct PlatformConfig {
     pub bump: u8,
 
     pub update_authority: Pubkey,
 
-    // Protocol fee in basis points (e.g. 100 = 1%)
-    pub protocol_fee_bp: u16,
+    // Only this address can call claim_fees on markets tied to this platform
+    pub fee_claim_authority: Pubkey,
 
-    // Only this address can call claim_fees
-    pub fee_claimer: Pubkey,
+    // Platform fee in basis points
+    pub platform_fee_bp: u16,
 
-    // Minimum time_to_stake (seconds) accepted by create_market.
+    // Reward-pool fee in basis points
+    pub reward_pool_fee_bp: u16,
+
+    // Minimum time_to_stake (seconds) accepted by create_market
     pub min_time_to_stake_seconds: u64,
 
-    // Minimum time_to_reveal (seconds) accepted by create_market.
+    // Minimum time_to_reveal (seconds) accepted by create_market
     pub min_time_to_reveal_seconds: u64,
+}
+
+/// Per-platform mint allowlist. Existence permits a market on this platform
+/// to use the given mint. Holds no tokens — custody is per-market.
+#[account]
+#[derive(InitSpace)]
+pub struct AllowedMint {
+    pub bump: u8,
+    pub platform: Pubkey,
+    pub mint: Pubkey,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
@@ -34,9 +47,10 @@ pub struct OpportunityMarket {
     pub index: u64,           // part of PDA seed
     pub total_options: u64,
 
+    // Platform this market is tied to. Drives fee-claim authority and rules.
+    pub platform: Pubkey,
+
     // If set, means market is funded and ready to be opened for staking.
-    // What actions are possible depends on current timestamp in relation to
-    // `open_timestamp`, `time_to_stake` and `time_to_reveal`
     pub open_timestamp: Option<u64>,
 
     // Seconds from open_timestamp
@@ -73,8 +87,12 @@ pub struct OpportunityMarket {
     // If true, staking is halted
     pub paused: bool,
 
-    // Snapshot of central state fee taken when market is created.
-    pub protocol_fee_bp: u16,
+    // Snapshots of platform fee policy taken at create time.
+    pub platform_fee_bp: u16,
+    pub reward_pool_fee_bp: u16,
+
+    // Running counter of platform fees held in this market's ATA, awaiting claim.
+    pub collected_platform_fees: u64,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
@@ -93,8 +111,9 @@ pub struct StakeAccount {
     pub state_nonce_disclosure: u128,
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
-    pub amount: u64,                         // stake amount in market token mint base units
-    pub fee: u64,                            // fee paid during stake(), for stuck refunds
+    pub amount: u64,                         // net stake (after both fees)
+    pub platform_fee: u64,                   // fee owed to the platform
+    pub reward_pool_fee: u64,                // fee added to the market reward pool
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,
@@ -104,14 +123,6 @@ pub struct StakeAccount {
     pub pending_stake: bool,                 // true while MPC stake computation is in flight
     pub pending_reveal: bool,                // true while MPC reveal computation is in flight
     pub id: u32,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct TokenVault {
-    pub bump: u8,
-    pub mint: Pubkey,
-    pub collected_fees: u64,
 }
 
 #[account]
@@ -143,4 +154,3 @@ pub struct TimelockedAccountChange {
     pub proposed_value: Pubkey,
     pub execute_after: i64,
 }
-

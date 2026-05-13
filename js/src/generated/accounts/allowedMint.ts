@@ -21,8 +21,6 @@ import {
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -39,104 +37,106 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 
-export const TOKEN_VAULT_DISCRIMINATOR = new Uint8Array([
-  121, 7, 84, 254, 151, 228, 43, 144,
+export const ALLOWED_MINT_DISCRIMINATOR = new Uint8Array([
+  173, 229, 179, 46, 121, 164, 247, 6,
 ]);
 
-export function getTokenVaultDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 8).encode(TOKEN_VAULT_DISCRIMINATOR);
+export function getAllowedMintDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 8).encode(
+    ALLOWED_MINT_DISCRIMINATOR
+  );
 }
 
-export type TokenVault = {
+export type AllowedMint = {
   discriminator: ReadonlyUint8Array;
   bump: number;
+  platform: Address;
   mint: Address;
-  collectedFees: bigint;
 };
 
-export type TokenVaultArgs = {
+export type AllowedMintArgs = {
   bump: number;
+  platform: Address;
   mint: Address;
-  collectedFees: number | bigint;
 };
 
-export function getTokenVaultEncoder(): FixedSizeEncoder<TokenVaultArgs> {
+export function getAllowedMintEncoder(): FixedSizeEncoder<AllowedMintArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
+      ['platform', getAddressEncoder()],
       ['mint', getAddressEncoder()],
-      ['collectedFees', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: TOKEN_VAULT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ALLOWED_MINT_DISCRIMINATOR })
   );
 }
 
-export function getTokenVaultDecoder(): FixedSizeDecoder<TokenVault> {
+export function getAllowedMintDecoder(): FixedSizeDecoder<AllowedMint> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
+    ['platform', getAddressDecoder()],
     ['mint', getAddressDecoder()],
-    ['collectedFees', getU64Decoder()],
   ]);
 }
 
-export function getTokenVaultCodec(): FixedSizeCodec<
-  TokenVaultArgs,
-  TokenVault
+export function getAllowedMintCodec(): FixedSizeCodec<
+  AllowedMintArgs,
+  AllowedMint
 > {
-  return combineCodec(getTokenVaultEncoder(), getTokenVaultDecoder());
+  return combineCodec(getAllowedMintEncoder(), getAllowedMintDecoder());
 }
 
-export function decodeTokenVault<TAddress extends string = string>(
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<TokenVault, TAddress>;
-export function decodeTokenVault<TAddress extends string = string>(
+): Account<AllowedMint, TAddress>;
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<TokenVault, TAddress>;
-export function decodeTokenVault<TAddress extends string = string>(
+): MaybeAccount<AllowedMint, TAddress>;
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<TokenVault, TAddress> | MaybeAccount<TokenVault, TAddress> {
+): Account<AllowedMint, TAddress> | MaybeAccount<AllowedMint, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getTokenVaultDecoder()
+    getAllowedMintDecoder()
   );
 }
 
-export async function fetchTokenVault<TAddress extends string = string>(
+export async function fetchAllowedMint<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<TokenVault, TAddress>> {
-  const maybeAccount = await fetchMaybeTokenVault(rpc, address, config);
+): Promise<Account<AllowedMint, TAddress>> {
+  const maybeAccount = await fetchMaybeAllowedMint(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeTokenVault<TAddress extends string = string>(
+export async function fetchMaybeAllowedMint<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<TokenVault, TAddress>> {
+): Promise<MaybeAccount<AllowedMint, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeTokenVault(maybeAccount);
+  return decodeAllowedMint(maybeAccount);
 }
 
-export async function fetchAllTokenVault(
+export async function fetchAllAllowedMint(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<TokenVault>[]> {
-  const maybeAccounts = await fetchAllMaybeTokenVault(rpc, addresses, config);
+): Promise<Account<AllowedMint>[]> {
+  const maybeAccounts = await fetchAllMaybeAllowedMint(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeTokenVault(
+export async function fetchAllMaybeAllowedMint(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<TokenVault>[]> {
+): Promise<MaybeAccount<AllowedMint>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeTokenVault(maybeAccount));
+  return maybeAccounts.map((maybeAccount) => decodeAllowedMint(maybeAccount));
 }

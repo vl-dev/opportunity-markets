@@ -27,31 +27,35 @@ pub mod opportunity_market {
         instructions::reveal_stake_comp_def(ctx)
     }
 
-    pub fn init_central_state(
-        ctx: Context<InitCentralState>,
-        protocol_fee_bp: u16,
-        fee_claimer: Pubkey,
+    pub fn init_platform_config(
+        ctx: Context<InitPlatformConfig>,
+        platform_fee_bp: u16,
+        reward_pool_fee_bp: u16,
+        fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::init_central_state(
+        instructions::init_platform_config(
             ctx,
-            protocol_fee_bp,
-            fee_claimer,
+            platform_fee_bp,
+            reward_pool_fee_bp,
+            fee_claim_authority,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
         )
     }
 
-    pub fn update_central_state(
-        ctx: Context<UpdateCentralState>,
-        protocol_fee_bp: u16,
+    pub fn update_platform_config(
+        ctx: Context<UpdatePlatformConfig>,
+        platform_fee_bp: u16,
+        reward_pool_fee_bp: u16,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::update_central_state(
+        instructions::update_platform_config(
             ctx,
-            protocol_fee_bp,
+            platform_fee_bp,
+            reward_pool_fee_bp,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
         )
@@ -63,10 +67,10 @@ pub mod opportunity_market {
         instructions::propose_new_update_authority(ctx)
     }
 
-    pub fn propose_new_fee_claimer(
-        ctx: Context<ProposeNewFeeClaimer>,
+    pub fn propose_new_fee_claim_authority(
+        ctx: Context<ProposeNewFeeClaimAuthority>,
     ) -> Result<()> {
-        instructions::propose_new_fee_claimer(ctx)
+        instructions::propose_new_fee_claim_authority(ctx)
     }
 
     pub fn finalize_new_update_authority(
@@ -75,10 +79,10 @@ pub mod opportunity_market {
         instructions::finalize_new_update_authority(ctx)
     }
 
-    pub fn finalize_new_fee_claimer(
-        ctx: Context<FinalizeNewFeeClaimer>,
+    pub fn finalize_new_fee_claim_authority(
+        ctx: Context<FinalizeNewFeeClaimAuthority>,
     ) -> Result<()> {
-        instructions::finalize_new_fee_claimer(ctx)
+        instructions::finalize_new_fee_claim_authority(ctx)
     }
 
     pub fn cancel_update_authority_change(
@@ -87,14 +91,14 @@ pub mod opportunity_market {
         instructions::cancel_update_authority_change(ctx)
     }
 
-    pub fn cancel_fee_claimer_change(
-        ctx: Context<CancelFeeClaimerChange>,
+    pub fn cancel_fee_claim_authority_change(
+        ctx: Context<CancelFeeClaimAuthorityChange>,
     ) -> Result<()> {
-        instructions::cancel_fee_claimer_change(ctx)
+        instructions::cancel_fee_claim_authority_change(ctx)
     }
 
-    pub fn init_token_vault(ctx: Context<InitTokenVault>) -> Result<()> {
-        instructions::init_token_vault(ctx)
+    pub fn init_allowed_mint(ctx: Context<InitAllowedMint>) -> Result<()> {
+        instructions::init_allowed_mint(ctx)
     }
 
     pub fn create_market(

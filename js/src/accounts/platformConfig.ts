@@ -1,17 +1,19 @@
 import {
   type Address,
+  getAddressEncoder,
   getProgramDerivedAddress,
   type ProgramDerivedAddress,
 } from "@solana/kit";
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from "../generated";
 
-export const CENTRAL_STATE_SEED = "central_state";
+export const PLATFORM_CONFIG_SEED = "platform_config";
 
-export async function getCentralStateAddress(
-  programId: Address = OPPORTUNITY_MARKET_PROGRAM_ADDRESS
+export async function getPlatformConfigAddress(
+  authority: Address,
+  programId: Address = OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 ): Promise<ProgramDerivedAddress> {
   return getProgramDerivedAddress({
     programAddress: programId,
-    seeds: [CENTRAL_STATE_SEED],
+    seeds: [PLATFORM_CONFIG_SEED, getAddressEncoder().encode(authority)],
   });
 }

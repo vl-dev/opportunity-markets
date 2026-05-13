@@ -39,22 +39,22 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const PROPOSE_NEW_UPDATE_AUTHORITY_DISCRIMINATOR = new Uint8Array([
-  190, 245, 249, 53, 37, 130, 25, 87,
+export const INIT_ALLOWED_MINT_DISCRIMINATOR = new Uint8Array([
+  215, 70, 3, 5, 42, 229, 151, 10,
 ]);
 
-export function getProposeNewUpdateAuthorityDiscriminatorBytes() {
+export function getInitAllowedMintDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    PROPOSE_NEW_UPDATE_AUTHORITY_DISCRIMINATOR
+    INIT_ALLOWED_MINT_DISCRIMINATOR
   );
 }
 
-export type ProposeNewUpdateAuthorityInstruction<
+export type InitAllowedMintInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountUpdateAuthority extends string | AccountMeta<string> = string,
   TAccountPlatformConfig extends string | AccountMeta<string> = string,
-  TAccountProposedAuthority extends string | AccountMeta<string> = string,
-  TAccountTimelockedChange extends string | AccountMeta<string> = string,
+  TAccountTokenMint extends string | AccountMeta<string> = string,
+  TAccountAllowedMint extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -69,12 +69,12 @@ export type ProposeNewUpdateAuthorityInstruction<
       TAccountPlatformConfig extends string
         ? ReadonlyAccount<TAccountPlatformConfig>
         : TAccountPlatformConfig,
-      TAccountProposedAuthority extends string
-        ? ReadonlyAccount<TAccountProposedAuthority>
-        : TAccountProposedAuthority,
-      TAccountTimelockedChange extends string
-        ? WritableAccount<TAccountTimelockedChange>
-        : TAccountTimelockedChange,
+      TAccountTokenMint extends string
+        ? ReadonlyAccount<TAccountTokenMint>
+        : TAccountTokenMint,
+      TAccountAllowedMint extends string
+        ? WritableAccount<TAccountAllowedMint>
+        : TAccountAllowedMint,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -82,75 +82,72 @@ export type ProposeNewUpdateAuthorityInstruction<
     ]
   >;
 
-export type ProposeNewUpdateAuthorityInstructionData = {
+export type InitAllowedMintInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type ProposeNewUpdateAuthorityInstructionDataArgs = {};
+export type InitAllowedMintInstructionDataArgs = {};
 
-export function getProposeNewUpdateAuthorityInstructionDataEncoder(): FixedSizeEncoder<ProposeNewUpdateAuthorityInstructionDataArgs> {
+export function getInitAllowedMintInstructionDataEncoder(): FixedSizeEncoder<InitAllowedMintInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({
-      ...value,
-      discriminator: PROPOSE_NEW_UPDATE_AUTHORITY_DISCRIMINATOR,
-    })
+    (value) => ({ ...value, discriminator: INIT_ALLOWED_MINT_DISCRIMINATOR })
   );
 }
 
-export function getProposeNewUpdateAuthorityInstructionDataDecoder(): FixedSizeDecoder<ProposeNewUpdateAuthorityInstructionData> {
+export function getInitAllowedMintInstructionDataDecoder(): FixedSizeDecoder<InitAllowedMintInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getProposeNewUpdateAuthorityInstructionDataCodec(): FixedSizeCodec<
-  ProposeNewUpdateAuthorityInstructionDataArgs,
-  ProposeNewUpdateAuthorityInstructionData
+export function getInitAllowedMintInstructionDataCodec(): FixedSizeCodec<
+  InitAllowedMintInstructionDataArgs,
+  InitAllowedMintInstructionData
 > {
   return combineCodec(
-    getProposeNewUpdateAuthorityInstructionDataEncoder(),
-    getProposeNewUpdateAuthorityInstructionDataDecoder()
+    getInitAllowedMintInstructionDataEncoder(),
+    getInitAllowedMintInstructionDataDecoder()
   );
 }
 
-export type ProposeNewUpdateAuthorityAsyncInput<
+export type InitAllowedMintAsyncInput<
   TAccountUpdateAuthority extends string = string,
   TAccountPlatformConfig extends string = string,
-  TAccountProposedAuthority extends string = string,
-  TAccountTimelockedChange extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountAllowedMint extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   platformConfig: Address<TAccountPlatformConfig>;
-  proposedAuthority: Address<TAccountProposedAuthority>;
-  timelockedChange?: Address<TAccountTimelockedChange>;
+  tokenMint: Address<TAccountTokenMint>;
+  allowedMint?: Address<TAccountAllowedMint>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export async function getProposeNewUpdateAuthorityInstructionAsync<
+export async function getInitAllowedMintInstructionAsync<
   TAccountUpdateAuthority extends string,
   TAccountPlatformConfig extends string,
-  TAccountProposedAuthority extends string,
-  TAccountTimelockedChange extends string,
+  TAccountTokenMint extends string,
+  TAccountAllowedMint extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: ProposeNewUpdateAuthorityAsyncInput<
+  input: InitAllowedMintAsyncInput<
     TAccountUpdateAuthority,
     TAccountPlatformConfig,
-    TAccountProposedAuthority,
-    TAccountTimelockedChange,
+    TAccountTokenMint,
+    TAccountAllowedMint,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  ProposeNewUpdateAuthorityInstruction<
+  InitAllowedMintInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountPlatformConfig,
-    TAccountProposedAuthority,
-    TAccountTimelockedChange,
+    TAccountTokenMint,
+    TAccountAllowedMint,
     TAccountSystemProgram
   >
 > {
@@ -162,14 +159,8 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
     platformConfig: { value: input.platformConfig ?? null, isWritable: false },
-    proposedAuthority: {
-      value: input.proposedAuthority ?? null,
-      isWritable: false,
-    },
-    timelockedChange: {
-      value: input.timelockedChange ?? null,
-      isWritable: true,
-    },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    allowedMint: { value: input.allowedMint ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -178,25 +169,19 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.timelockedChange.value) {
-    accounts.timelockedChange.value = await getProgramDerivedAddress({
+  if (!accounts.allowedMint.value) {
+    accounts.allowedMint.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            116, 105, 109, 101, 108, 111, 99, 107, 101, 100, 95, 99, 104, 97,
-            110, 103, 101,
-          ])
-        ),
-        getBytesEncoder().encode(
-          new Uint8Array([
-            117, 112, 100, 97, 116, 101, 95, 97, 117, 116, 104, 111, 114, 105,
-            116, 121,
+            97, 108, 108, 111, 119, 101, 100, 95, 109, 105, 110, 116,
           ])
         ),
         getAddressEncoder().encode(
           expectAddress(accounts.platformConfig.value)
         ),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
     });
   }
@@ -210,58 +195,58 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
     accounts: [
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.platformConfig),
-      getAccountMeta(accounts.proposedAuthority),
-      getAccountMeta(accounts.timelockedChange),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.allowedMint),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getProposeNewUpdateAuthorityInstructionDataEncoder().encode({}),
+    data: getInitAllowedMintInstructionDataEncoder().encode({}),
     programAddress,
-  } as ProposeNewUpdateAuthorityInstruction<
+  } as InitAllowedMintInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountPlatformConfig,
-    TAccountProposedAuthority,
-    TAccountTimelockedChange,
+    TAccountTokenMint,
+    TAccountAllowedMint,
     TAccountSystemProgram
   >);
 }
 
-export type ProposeNewUpdateAuthorityInput<
+export type InitAllowedMintInput<
   TAccountUpdateAuthority extends string = string,
   TAccountPlatformConfig extends string = string,
-  TAccountProposedAuthority extends string = string,
-  TAccountTimelockedChange extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountAllowedMint extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   platformConfig: Address<TAccountPlatformConfig>;
-  proposedAuthority: Address<TAccountProposedAuthority>;
-  timelockedChange: Address<TAccountTimelockedChange>;
+  tokenMint: Address<TAccountTokenMint>;
+  allowedMint: Address<TAccountAllowedMint>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getProposeNewUpdateAuthorityInstruction<
+export function getInitAllowedMintInstruction<
   TAccountUpdateAuthority extends string,
   TAccountPlatformConfig extends string,
-  TAccountProposedAuthority extends string,
-  TAccountTimelockedChange extends string,
+  TAccountTokenMint extends string,
+  TAccountAllowedMint extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: ProposeNewUpdateAuthorityInput<
+  input: InitAllowedMintInput<
     TAccountUpdateAuthority,
     TAccountPlatformConfig,
-    TAccountProposedAuthority,
-    TAccountTimelockedChange,
+    TAccountTokenMint,
+    TAccountAllowedMint,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): ProposeNewUpdateAuthorityInstruction<
+): InitAllowedMintInstruction<
   TProgramAddress,
   TAccountUpdateAuthority,
   TAccountPlatformConfig,
-  TAccountProposedAuthority,
-  TAccountTimelockedChange,
+  TAccountTokenMint,
+  TAccountAllowedMint,
   TAccountSystemProgram
 > {
   // Program address.
@@ -272,14 +257,8 @@ export function getProposeNewUpdateAuthorityInstruction<
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
     platformConfig: { value: input.platformConfig ?? null, isWritable: false },
-    proposedAuthority: {
-      value: input.proposedAuthority ?? null,
-      isWritable: false,
-    },
-    timelockedChange: {
-      value: input.timelockedChange ?? null,
-      isWritable: true,
-    },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    allowedMint: { value: input.allowedMint ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -298,23 +277,23 @@ export function getProposeNewUpdateAuthorityInstruction<
     accounts: [
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.platformConfig),
-      getAccountMeta(accounts.proposedAuthority),
-      getAccountMeta(accounts.timelockedChange),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.allowedMint),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getProposeNewUpdateAuthorityInstructionDataEncoder().encode({}),
+    data: getInitAllowedMintInstructionDataEncoder().encode({}),
     programAddress,
-  } as ProposeNewUpdateAuthorityInstruction<
+  } as InitAllowedMintInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountPlatformConfig,
-    TAccountProposedAuthority,
-    TAccountTimelockedChange,
+    TAccountTokenMint,
+    TAccountAllowedMint,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedProposeNewUpdateAuthorityInstruction<
+export type ParsedInitAllowedMintInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -322,21 +301,21 @@ export type ParsedProposeNewUpdateAuthorityInstruction<
   accounts: {
     updateAuthority: TAccountMetas[0];
     platformConfig: TAccountMetas[1];
-    proposedAuthority: TAccountMetas[2];
-    timelockedChange: TAccountMetas[3];
+    tokenMint: TAccountMetas[2];
+    allowedMint: TAccountMetas[3];
     systemProgram: TAccountMetas[4];
   };
-  data: ProposeNewUpdateAuthorityInstructionData;
+  data: InitAllowedMintInstructionData;
 };
 
-export function parseProposeNewUpdateAuthorityInstruction<
+export function parseInitAllowedMintInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedProposeNewUpdateAuthorityInstruction<TProgram, TAccountMetas> {
+): ParsedInitAllowedMintInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -352,12 +331,10 @@ export function parseProposeNewUpdateAuthorityInstruction<
     accounts: {
       updateAuthority: getNextAccount(),
       platformConfig: getNextAccount(),
-      proposedAuthority: getNextAccount(),
-      timelockedChange: getNextAccount(),
+      tokenMint: getNextAccount(),
+      allowedMint: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getProposeNewUpdateAuthorityInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getInitAllowedMintInstructionDataDecoder().decode(instruction.data),
   };
 }

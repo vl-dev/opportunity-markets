@@ -74,7 +74,8 @@ export type StakeAccount = {
   stakedAtTimestamp: Option<bigint>;
   unstakedAtTimestamp: Option<bigint>;
   amount: bigint;
-  fee: bigint;
+  platformFee: bigint;
+  rewardPoolFee: bigint;
   revealedOption: Option<bigint>;
   score: Option<bigint>;
   totalIncremented: boolean;
@@ -98,7 +99,8 @@ export type StakeAccountArgs = {
   stakedAtTimestamp: OptionOrNullable<number | bigint>;
   unstakedAtTimestamp: OptionOrNullable<number | bigint>;
   amount: number | bigint;
-  fee: number | bigint;
+  platformFee: number | bigint;
+  rewardPoolFee: number | bigint;
   revealedOption: OptionOrNullable<number | bigint>;
   score: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
@@ -128,7 +130,8 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
       ['stakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['unstakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['amount', getU64Encoder()],
-      ['fee', getU64Encoder()],
+      ['platformFee', getU64Encoder()],
+      ['rewardPoolFee', getU64Encoder()],
       ['revealedOption', getOptionEncoder(getU64Encoder())],
       ['score', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
@@ -160,7 +163,8 @@ export function getStakeAccountDecoder(): Decoder<StakeAccount> {
     ['stakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['unstakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['amount', getU64Decoder()],
-    ['fee', getU64Decoder()],
+    ['platformFee', getU64Decoder()],
+    ['rewardPoolFee', getU64Decoder()],
     ['revealedOption', getOptionDecoder(getU64Decoder())],
     ['score', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],

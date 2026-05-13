@@ -26,7 +26,7 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
-  type ReadonlyAccount,
+  type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
@@ -39,24 +39,23 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const PROPOSE_NEW_FEE_CLAIMER_DISCRIMINATOR = new Uint8Array([
-  252, 167, 189, 0, 102, 55, 31, 59,
+export const FINALIZE_NEW_FEE_CLAIM_AUTHORITY_DISCRIMINATOR = new Uint8Array([
+  101, 102, 211, 163, 210, 183, 108, 153,
 ]);
 
-export function getProposeNewFeeClaimerDiscriminatorBytes() {
+export function getFinalizeNewFeeClaimAuthorityDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    PROPOSE_NEW_FEE_CLAIMER_DISCRIMINATOR
+    FINALIZE_NEW_FEE_CLAIM_AUTHORITY_DISCRIMINATOR
   );
 }
 
-export type ProposeNewFeeClaimerInstruction<
+export type FinalizeNewFeeClaimAuthorityInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountUpdateAuthority extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
-  TAccountProposedFeeClaimer extends string | AccountMeta<string> = string,
+  TAccountProposedFeeClaimAuthority extends string | AccountMeta<string> =
+    string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountTimelockedChange extends string | AccountMeta<string> = string,
-  TAccountSystemProgram extends string | AccountMeta<string> =
-    '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -66,92 +65,86 @@ export type ProposeNewFeeClaimerInstruction<
         ? WritableSignerAccount<TAccountUpdateAuthority> &
             AccountSignerMeta<TAccountUpdateAuthority>
         : TAccountUpdateAuthority,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
-      TAccountProposedFeeClaimer extends string
-        ? ReadonlyAccount<TAccountProposedFeeClaimer>
-        : TAccountProposedFeeClaimer,
+      TAccountProposedFeeClaimAuthority extends string
+        ? ReadonlySignerAccount<TAccountProposedFeeClaimAuthority> &
+            AccountSignerMeta<TAccountProposedFeeClaimAuthority>
+        : TAccountProposedFeeClaimAuthority,
+      TAccountPlatformConfig extends string
+        ? WritableAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountTimelockedChange extends string
         ? WritableAccount<TAccountTimelockedChange>
         : TAccountTimelockedChange,
-      TAccountSystemProgram extends string
-        ? ReadonlyAccount<TAccountSystemProgram>
-        : TAccountSystemProgram,
       ...TRemainingAccounts,
     ]
   >;
 
-export type ProposeNewFeeClaimerInstructionData = {
+export type FinalizeNewFeeClaimAuthorityInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type ProposeNewFeeClaimerInstructionDataArgs = {};
+export type FinalizeNewFeeClaimAuthorityInstructionDataArgs = {};
 
-export function getProposeNewFeeClaimerInstructionDataEncoder(): FixedSizeEncoder<ProposeNewFeeClaimerInstructionDataArgs> {
+export function getFinalizeNewFeeClaimAuthorityInstructionDataEncoder(): FixedSizeEncoder<FinalizeNewFeeClaimAuthorityInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({
       ...value,
-      discriminator: PROPOSE_NEW_FEE_CLAIMER_DISCRIMINATOR,
+      discriminator: FINALIZE_NEW_FEE_CLAIM_AUTHORITY_DISCRIMINATOR,
     })
   );
 }
 
-export function getProposeNewFeeClaimerInstructionDataDecoder(): FixedSizeDecoder<ProposeNewFeeClaimerInstructionData> {
+export function getFinalizeNewFeeClaimAuthorityInstructionDataDecoder(): FixedSizeDecoder<FinalizeNewFeeClaimAuthorityInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getProposeNewFeeClaimerInstructionDataCodec(): FixedSizeCodec<
-  ProposeNewFeeClaimerInstructionDataArgs,
-  ProposeNewFeeClaimerInstructionData
+export function getFinalizeNewFeeClaimAuthorityInstructionDataCodec(): FixedSizeCodec<
+  FinalizeNewFeeClaimAuthorityInstructionDataArgs,
+  FinalizeNewFeeClaimAuthorityInstructionData
 > {
   return combineCodec(
-    getProposeNewFeeClaimerInstructionDataEncoder(),
-    getProposeNewFeeClaimerInstructionDataDecoder()
+    getFinalizeNewFeeClaimAuthorityInstructionDataEncoder(),
+    getFinalizeNewFeeClaimAuthorityInstructionDataDecoder()
   );
 }
 
-export type ProposeNewFeeClaimerAsyncInput<
+export type FinalizeNewFeeClaimAuthorityAsyncInput<
   TAccountUpdateAuthority extends string = string,
-  TAccountCentralState extends string = string,
-  TAccountProposedFeeClaimer extends string = string,
+  TAccountProposedFeeClaimAuthority extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
-  centralState?: Address<TAccountCentralState>;
-  proposedFeeClaimer: Address<TAccountProposedFeeClaimer>;
+  /** The proposed new fee-claim authority must co-sign to prevent fat-finger mistakes. */
+  proposedFeeClaimAuthority: TransactionSigner<TAccountProposedFeeClaimAuthority>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange?: Address<TAccountTimelockedChange>;
-  systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export async function getProposeNewFeeClaimerInstructionAsync<
+export async function getFinalizeNewFeeClaimAuthorityInstructionAsync<
   TAccountUpdateAuthority extends string,
-  TAccountCentralState extends string,
-  TAccountProposedFeeClaimer extends string,
+  TAccountProposedFeeClaimAuthority extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: ProposeNewFeeClaimerAsyncInput<
+  input: FinalizeNewFeeClaimAuthorityAsyncInput<
     TAccountUpdateAuthority,
-    TAccountCentralState,
-    TAccountProposedFeeClaimer,
-    TAccountTimelockedChange,
-    TAccountSystemProgram
+    TAccountProposedFeeClaimAuthority,
+    TAccountPlatformConfig,
+    TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  ProposeNewFeeClaimerInstruction<
+  FinalizeNewFeeClaimAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
-    TAccountProposedFeeClaimer,
-    TAccountTimelockedChange,
-    TAccountSystemProgram
+    TAccountProposedFeeClaimAuthority,
+    TAccountPlatformConfig,
+    TAccountTimelockedChange
   >
 > {
   // Program address.
@@ -161,16 +154,15 @@ export async function getProposeNewFeeClaimerInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
-    proposedFeeClaimer: {
-      value: input.proposedFeeClaimer ?? null,
+    proposedFeeClaimAuthority: {
+      value: input.proposedFeeClaimAuthority ?? null,
       isWritable: false,
     },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -178,18 +170,6 @@ export async function getProposeNewFeeClaimerInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.timelockedChange.value) {
     accounts.timelockedChange.value = await getProgramDerivedAddress({
       programAddress,
@@ -201,75 +181,70 @@ export async function getProposeNewFeeClaimerInstructionAsync<
           ])
         ),
         getBytesEncoder().encode(
-          new Uint8Array([102, 101, 101, 95, 99, 108, 97, 105, 109, 101, 114])
+          new Uint8Array([
+            102, 101, 101, 95, 99, 108, 97, 105, 109, 95, 97, 117, 116, 104,
+            111, 114, 105, 116, 121,
+          ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.centralState.value)),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
       ],
     });
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
   }
 
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.updateAuthority),
-      getAccountMeta(accounts.centralState),
-      getAccountMeta(accounts.proposedFeeClaimer),
+      getAccountMeta(accounts.proposedFeeClaimAuthority),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
-      getAccountMeta(accounts.systemProgram),
     ],
-    data: getProposeNewFeeClaimerInstructionDataEncoder().encode({}),
+    data: getFinalizeNewFeeClaimAuthorityInstructionDataEncoder().encode({}),
     programAddress,
-  } as ProposeNewFeeClaimerInstruction<
+  } as FinalizeNewFeeClaimAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
-    TAccountProposedFeeClaimer,
-    TAccountTimelockedChange,
-    TAccountSystemProgram
+    TAccountProposedFeeClaimAuthority,
+    TAccountPlatformConfig,
+    TAccountTimelockedChange
   >);
 }
 
-export type ProposeNewFeeClaimerInput<
+export type FinalizeNewFeeClaimAuthorityInput<
   TAccountUpdateAuthority extends string = string,
-  TAccountCentralState extends string = string,
-  TAccountProposedFeeClaimer extends string = string,
+  TAccountProposedFeeClaimAuthority extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTimelockedChange extends string = string,
-  TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
-  centralState: Address<TAccountCentralState>;
-  proposedFeeClaimer: Address<TAccountProposedFeeClaimer>;
+  /** The proposed new fee-claim authority must co-sign to prevent fat-finger mistakes. */
+  proposedFeeClaimAuthority: TransactionSigner<TAccountProposedFeeClaimAuthority>;
+  platformConfig: Address<TAccountPlatformConfig>;
   timelockedChange: Address<TAccountTimelockedChange>;
-  systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getProposeNewFeeClaimerInstruction<
+export function getFinalizeNewFeeClaimAuthorityInstruction<
   TAccountUpdateAuthority extends string,
-  TAccountCentralState extends string,
-  TAccountProposedFeeClaimer extends string,
+  TAccountProposedFeeClaimAuthority extends string,
+  TAccountPlatformConfig extends string,
   TAccountTimelockedChange extends string,
-  TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: ProposeNewFeeClaimerInput<
+  input: FinalizeNewFeeClaimAuthorityInput<
     TAccountUpdateAuthority,
-    TAccountCentralState,
-    TAccountProposedFeeClaimer,
-    TAccountTimelockedChange,
-    TAccountSystemProgram
+    TAccountProposedFeeClaimAuthority,
+    TAccountPlatformConfig,
+    TAccountTimelockedChange
   >,
   config?: { programAddress?: TProgramAddress }
-): ProposeNewFeeClaimerInstruction<
+): FinalizeNewFeeClaimAuthorityInstruction<
   TProgramAddress,
   TAccountUpdateAuthority,
-  TAccountCentralState,
-  TAccountProposedFeeClaimer,
-  TAccountTimelockedChange,
-  TAccountSystemProgram
+  TAccountProposedFeeClaimAuthority,
+  TAccountPlatformConfig,
+  TAccountTimelockedChange
 > {
   // Program address.
   const programAddress =
@@ -278,73 +253,64 @@ export function getProposeNewFeeClaimerInstruction<
   // Original accounts.
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
-    proposedFeeClaimer: {
-      value: input.proposedFeeClaimer ?? null,
+    proposedFeeClaimAuthority: {
+      value: input.proposedFeeClaimAuthority ?? null,
       isWritable: false,
     },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: true },
     timelockedChange: {
       value: input.timelockedChange ?? null,
       isWritable: true,
     },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
     ResolvedAccount
   >;
 
-  // Resolve default values.
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.updateAuthority),
-      getAccountMeta(accounts.centralState),
-      getAccountMeta(accounts.proposedFeeClaimer),
+      getAccountMeta(accounts.proposedFeeClaimAuthority),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.timelockedChange),
-      getAccountMeta(accounts.systemProgram),
     ],
-    data: getProposeNewFeeClaimerInstructionDataEncoder().encode({}),
+    data: getFinalizeNewFeeClaimAuthorityInstructionDataEncoder().encode({}),
     programAddress,
-  } as ProposeNewFeeClaimerInstruction<
+  } as FinalizeNewFeeClaimAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
-    TAccountProposedFeeClaimer,
-    TAccountTimelockedChange,
-    TAccountSystemProgram
+    TAccountProposedFeeClaimAuthority,
+    TAccountPlatformConfig,
+    TAccountTimelockedChange
   >);
 }
 
-export type ParsedProposeNewFeeClaimerInstruction<
+export type ParsedFinalizeNewFeeClaimAuthorityInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     updateAuthority: TAccountMetas[0];
-    centralState: TAccountMetas[1];
-    proposedFeeClaimer: TAccountMetas[2];
+    /** The proposed new fee-claim authority must co-sign to prevent fat-finger mistakes. */
+    proposedFeeClaimAuthority: TAccountMetas[1];
+    platformConfig: TAccountMetas[2];
     timelockedChange: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
   };
-  data: ProposeNewFeeClaimerInstructionData;
+  data: FinalizeNewFeeClaimAuthorityInstructionData;
 };
 
-export function parseProposeNewFeeClaimerInstruction<
+export function parseFinalizeNewFeeClaimAuthorityInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedProposeNewFeeClaimerInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedFinalizeNewFeeClaimAuthorityInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -358,12 +324,11 @@ export function parseProposeNewFeeClaimerInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       updateAuthority: getNextAccount(),
-      centralState: getNextAccount(),
-      proposedFeeClaimer: getNextAccount(),
+      proposedFeeClaimAuthority: getNextAccount(),
+      platformConfig: getNextAccount(),
       timelockedChange: getNextAccount(),
-      systemProgram: getNextAccount(),
     },
-    data: getProposeNewFeeClaimerInstructionDataDecoder().decode(
+    data: getFinalizeNewFeeClaimAuthorityInstructionDataDecoder().decode(
       instruction.data
     ),
   };

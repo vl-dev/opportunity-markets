@@ -18,6 +18,8 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -31,6 +33,7 @@ import {
 export type MarketCreatedEvent = {
   market: Address;
   creator: Address;
+  platform: Address;
   index: bigint;
   mint: Address;
   timeToStake: bigint;
@@ -41,12 +44,15 @@ export type MarketCreatedEvent = {
   unstakeDelaySeconds: bigint;
   allowClosingEarly: boolean;
   minStakeAmount: bigint;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
   timestamp: bigint;
 };
 
 export type MarketCreatedEventArgs = {
   market: Address;
   creator: Address;
+  platform: Address;
   index: number | bigint;
   mint: Address;
   timeToStake: number | bigint;
@@ -57,6 +63,8 @@ export type MarketCreatedEventArgs = {
   unstakeDelaySeconds: number | bigint;
   allowClosingEarly: boolean;
   minStakeAmount: number | bigint;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
   timestamp: number | bigint;
 };
 
@@ -64,6 +72,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
   return getStructEncoder([
     ['market', getAddressEncoder()],
     ['creator', getAddressEncoder()],
+    ['platform', getAddressEncoder()],
     ['index', getU64Encoder()],
     ['mint', getAddressEncoder()],
     ['timeToStake', getU64Encoder()],
@@ -74,6 +83,8 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['unstakeDelaySeconds', getU64Encoder()],
     ['allowClosingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
+    ['platformFeeBp', getU16Encoder()],
+    ['rewardPoolFeeBp', getU16Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -82,6 +93,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
   return getStructDecoder([
     ['market', getAddressDecoder()],
     ['creator', getAddressDecoder()],
+    ['platform', getAddressDecoder()],
     ['index', getU64Decoder()],
     ['mint', getAddressDecoder()],
     ['timeToStake', getU64Decoder()],
@@ -92,6 +104,8 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['unstakeDelaySeconds', getU64Decoder()],
     ['allowClosingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
