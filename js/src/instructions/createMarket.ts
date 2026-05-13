@@ -20,6 +20,7 @@ export interface CreateMarketParams extends BaseInstructionParams {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   minStakeAmount: bigint;
   marketFeeClaimer: Address;
 }

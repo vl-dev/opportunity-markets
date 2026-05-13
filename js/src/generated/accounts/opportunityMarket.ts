@@ -81,6 +81,7 @@ export type OpportunityMarket = {
   revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
@@ -110,6 +111,7 @@ export type OpportunityMarketArgs = {
   revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: number | bigint;
+  earlinessMultiplier: number;
   unstakeDelaySeconds: number | bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
@@ -145,6 +147,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['revealPeriodAuthority', getAddressEncoder()],
       ['mint', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
+      ['earlinessMultiplier', getU16Encoder()],
       ['unstakeDelaySeconds', getU64Encoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
@@ -182,6 +185,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['revealPeriodAuthority', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['earlinessMultiplier', getU16Decoder()],
     ['unstakeDelaySeconds', getU64Decoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],

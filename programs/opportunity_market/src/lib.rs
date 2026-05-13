@@ -122,6 +122,7 @@ pub mod opportunity_market {
         allow_closing_early: bool,
         reveal_period_authority: Pubkey,
         earliness_cutoff_seconds: u64,
+        earliness_multiplier: u16,
         min_stake_amount: u64,
         market_fee_claimer: Pubkey,
     ) -> Result<()> {
@@ -136,6 +137,7 @@ pub mod opportunity_market {
             allow_closing_early,
             reveal_period_authority,
             earliness_cutoff_seconds,
+            earliness_multiplier,
             min_stake_amount,
             market_fee_claimer,
         )

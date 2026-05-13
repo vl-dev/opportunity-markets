@@ -21,6 +21,8 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -120,6 +122,7 @@ export type CreateMarketInstructionData = {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   minStakeAmount: bigint;
   marketFeeClaimer: Address;
 };
@@ -134,6 +137,7 @@ export type CreateMarketInstructionDataArgs = {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: number | bigint;
+  earlinessMultiplier: number;
   minStakeAmount: number | bigint;
   marketFeeClaimer: Address;
 };
@@ -151,6 +155,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['allowClosingEarly', getBooleanEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
+      ['earlinessMultiplier', getU16Encoder()],
       ['minStakeAmount', getU64Encoder()],
       ['marketFeeClaimer', getAddressEncoder()],
     ]),
@@ -170,6 +175,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['allowClosingEarly', getBooleanDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['earlinessMultiplier', getU16Decoder()],
     ['minStakeAmount', getU64Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
   ]);
@@ -215,6 +221,7 @@ export type CreateMarketAsyncInput<
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
+  earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
   marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
 };
@@ -397,6 +404,7 @@ export type CreateMarketInput<
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
+  earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
   marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
 };

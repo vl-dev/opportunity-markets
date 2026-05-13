@@ -1227,6 +1227,10 @@
           "type": "u64"
         },
         {
+          "name": "earliness_multiplier",
+          "type": "u16"
+        },
+        {
           "name": "min_stake_amount",
           "type": "u64"
         },
@@ -4682,6 +4686,10 @@
             "type": "u64"
           },
           {
+            "name": "earliness_multiplier",
+            "type": "u16"
+          },
+          {
             "name": "market_authority",
             "type": "pubkey"
           },
@@ -5000,6 +5008,10 @@
           {
             "name": "earliness_cutoff_seconds",
             "type": "u64"
+          },
+          {
+            "name": "earliness_multiplier",
+            "type": "u16"
           },
           {
             "name": "unstake_delay_seconds",

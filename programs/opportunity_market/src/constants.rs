@@ -15,6 +15,8 @@ pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
 /// Maximum unstake delay: 3 days
 pub const MAX_UNSTAKE_DELAY_SECONDS: u64 = 3 * 24 * 60 * 60;
 
+pub const MAX_EARLINESS_MULTIPLIER: u16 = 20_000;
+
 /// PDA seeds
 pub const PLATFORM_CONFIG_SEED: &[u8] = b"platform_config";
 pub const ALLOWED_MINT_SEED: &[u8] = b"allowed_mint";

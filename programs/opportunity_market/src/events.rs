@@ -25,6 +25,7 @@ pub struct MarketCreatedEvent {
     pub time_to_stake: u64,
     pub time_to_reveal: u64,
     pub earliness_cutoff_seconds: u64,
+    pub earliness_multiplier: u16,
     pub market_authority: Pubkey,
     pub authorized_reader_pubkey: [u8; 32],
     pub unstake_delay_seconds: u64,

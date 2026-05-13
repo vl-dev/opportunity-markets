@@ -11,5 +11,6 @@
   "marketAuthority": null,
   "marketFeeClaimer": null,
   "earlinessCutoffSeconds": 0,
+  "earlinessMultiplier": 10000,
   "minStakeAmount": 0
 }

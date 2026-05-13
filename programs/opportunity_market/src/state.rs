@@ -84,6 +84,9 @@ pub struct OpportunityMarket {
     // Score component configuration
     pub earliness_cutoff_seconds: u64,
 
+    // Peak earliness multiplier, PRECISION-scaled. Range [PRECISION, 2*PRECISION].
+    pub earliness_multiplier: u16,
+
     // Unstake delay seconds
     pub unstake_delay_seconds: u64,
 

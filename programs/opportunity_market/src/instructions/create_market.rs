@@ -2,9 +2,13 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-use crate::constants::{ALLOWED_MINT_SEED, MAX_UNSTAKE_DELAY_SECONDS, OPPORTUNITY_MARKET_SEED};
+use crate::constants::{
+    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, MAX_UNSTAKE_DELAY_SECONDS,
+    OPPORTUNITY_MARKET_SEED,
+};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
+use crate::score::PRECISION;
 use crate::state::{AllowedMint, OpportunityMarket, PlatformConfig};
 
 #[derive(Accounts)]
@@ -60,6 +64,7 @@ pub fn create_market(
     allow_closing_early: bool,
     reveal_period_authority: Pubkey,
     earliness_cutoff_seconds: u64,
+    earliness_multiplier: u16,
     min_stake_amount: u64,
     market_fee_claimer: Pubkey,
 ) -> Result<()> {
@@ -67,6 +72,8 @@ pub fn create_market(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
             && time_to_reveal >= ctx.accounts.platform_config.min_time_to_reveal_seconds
             && earliness_cutoff_seconds <= time_to_stake
+            && (earliness_multiplier as u64) >= PRECISION
+            && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER
             && unstake_delay_seconds <= MAX_UNSTAKE_DELAY_SECONDS,
         ErrorCode::InvalidParameters
     );
@@ -89,6 +96,7 @@ pub fn create_market(
     market.market_authority = market_authority;
     market.reveal_period_authority = reveal_period_authority;
     market.earliness_cutoff_seconds = earliness_cutoff_seconds;
+    market.earliness_multiplier = earliness_multiplier;
     market.unstake_delay_seconds = unstake_delay_seconds;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
@@ -112,6 +120,7 @@ pub fn create_market(
         unstake_delay_seconds: unstake_delay_seconds,
         allow_closing_early: allow_closing_early,
         earliness_cutoff_seconds: earliness_cutoff_seconds,
+        earliness_multiplier: earliness_multiplier,
         min_stake_amount: min_stake_amount,
         platform_fee_bp: platform_fee_bp,
         reward_pool_fee_bp: reward_pool_fee_bp,

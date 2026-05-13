@@ -79,6 +79,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         user_stake_end,
         stake_amount,
         market.earliness_cutoff_seconds,
+        market.earliness_multiplier,
     )?;
 
     ctx.accounts.option.total_score = ctx.accounts.option.total_score

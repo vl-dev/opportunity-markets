@@ -19,8 +19,12 @@ cp "$KEYPAIR_PATH" target/deploy/opportunity_market-keypair.json
 echo "Building..."
 arcium build
 
-# Test (--skip-build prevents overwriting the keypair)
-echo "Running tests..."
+# Unit tests (host-native, fast — run before spinning up the validator)
+echo "Running unit tests..."
+cargo test -p opportunity_market --lib
+
+# Integration tests (--skip-build prevents overwriting the keypair)
+echo "Running integration tests..."
 arcium test --skip-build
 
 # Kill stale solana-test-validator if one is hogging port 8899

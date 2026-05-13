@@ -93,6 +93,7 @@ interface MarketConfig {
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   minStakeAmount: bigint;
   marketFeeClaimer?: Address;
 }
@@ -156,6 +157,7 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
     unstakeDelaySeconds: 10n,
     allowClosingEarly: true,
     earlinessCutoffSeconds: 0n,
+    earlinessMultiplier: 10_000,
     minStakeAmount: 0n,
   },
 };
@@ -416,6 +418,7 @@ export class Platform {
       allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
+      earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
       marketFeeClaimer:
         marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
