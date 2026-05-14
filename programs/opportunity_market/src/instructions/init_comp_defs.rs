@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
+#[cfg(feature = "production-settings")]
 use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
+#[cfg(feature = "production-settings")]
 use arcium_macros::circuit_hash;
 
 use crate::ID;

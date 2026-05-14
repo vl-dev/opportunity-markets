@@ -1297,6 +1297,78 @@ describe("OpportunityMarket", () => {
     expect(market.data.collectedPlatformFees).to.equal(0n);
   });
 
+  it("expired market lets sponsors recover their deposits", async () => {
+    const lockedAmount = 500_000_000n;
+    const unlockedAmount = 300_000_000n;
+    // Wide windows so the in-resolution-window assertion can submit and land
+    // before the chain clock reaches expired_at.
+    const timeToStake = 15n;
+    const marketResolutionDeadlineSeconds = 15n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketResolutionDeadlineSeconds,
+      marketConfig: {
+        rewardAmount: 0n,
+        timeToStake,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const [lockedSponsor, unlockedSponsor] = platform.participants;
+    const rpc = platform.getRpc();
+
+    const lockedBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(lockedSponsor))).data.amount;
+    const unlockedBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(unlockedSponsor))).data.amount;
+
+    await platform.addReward(lockedSponsor, lockedAmount, true);
+    await platform.addReward(unlockedSponsor, unlockedAmount, false);
+
+    let market = await platform.fetchMarket();
+    expect(market.data.rewardAmount).to.equal(lockedAmount + unlockedAmount);
+
+    // Pre-open: locked sponsor cannot withdraw — lock is enforced.
+    await shouldThrowCustomError(
+      () => platform.withdrawReward(lockedSponsor),
+      OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
+    );
+
+    const openTimestamp = await platform.openMarket();
+    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
+    await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
+
+    // Resolution window: unlocked sponsor's withdraw is blocked by the time gate.
+    await shouldThrowCustomError(
+      () => platform.withdrawReward(unlockedSponsor),
+      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
+    );
+
+    // After expiry without resolution, both sponsors recover their deposits in full.
+    const expiredAt = stakeEnd + Number(marketResolutionDeadlineSeconds);
+    await sleepUntilOnChainTimestamp(expiredAt + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
+
+    await platform.withdrawReward(lockedSponsor);
+    await platform.withdrawReward(unlockedSponsor);
+
+    const lockedBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(lockedSponsor))).data.amount;
+    const unlockedBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(unlockedSponsor))).data.amount;
+    expect(lockedBalanceAfter).to.equal(lockedBalanceBefore);
+    expect(unlockedBalanceAfter).to.equal(unlockedBalanceBefore);
+
+    market = await platform.fetchMarket();
+    expect(market.data.rewardAmount).to.equal(0n);
+
+    const marketAta = await platform.getMarketAta();
+    const marketAtaBalance = (await fetchToken(rpc, marketAta)).data.amount;
+    expect(marketAtaBalance).to.equal(0n);
+  });
+
   it("rejects staking below the minimum stake amount", async () => {
     const minStakeAmount = 100_000_000n;
 

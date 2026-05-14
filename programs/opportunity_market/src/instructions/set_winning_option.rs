@@ -30,10 +30,7 @@ pub fn set_winning_option(
     reward_percentage: u8,
 ) -> Result<()> {
     require!(!ctx.accounts.market.resolved, ErrorCode::WinnerAlreadySelected);
-    require!(
-        reward_percentage > 0 && reward_percentage <= 100,
-        ErrorCode::InvalidParameters,
-    );
+    require!(reward_percentage <= 100, ErrorCode::InvalidParameters);
 
     let open_timestamp = ctx
         .accounts
@@ -77,7 +74,7 @@ pub fn set_winning_option(
         .ok_or(ErrorCode::Overflow)?;
     require!(new_alloc <= 100, ErrorCode::InvalidParameters);
 
-    ctx.accounts.option.selected = true;
+    ctx.accounts.option.selected = reward_percentage > 0;
     ctx.accounts.option.reward_percentage = reward_percentage;
     ctx.accounts.market.winning_option_allocation = new_alloc;
 

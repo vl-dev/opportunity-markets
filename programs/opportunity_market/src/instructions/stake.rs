@@ -177,7 +177,8 @@ pub fn stake(
     ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.state_nonce = state_nonce;
     ctx.accounts.stake_account.locked = true;
-    ctx.accounts.stake_account.pending_stake = true;
+    ctx.accounts.stake_account.pending_stake_computation =
+        Some(ctx.accounts.computation_account.key());
 
     let stake_account_key = ctx.accounts.stake_account.key();
     let market_key = ctx.accounts.market.key();
@@ -262,16 +263,20 @@ pub fn stake_callback(
         Err(e) => return Err(e),
     };
 
-    // Only run on the queue-time stake_account.
-    // A late callback delivered after close_stuck + re-init would see pending_stake=false.
+    // Reject any callback that did not originate from the computation this
+    // stake_account is waiting on. Without this, a stale callback from a
+    // previous (closed-then-reborn) account could land on a freshly re-staked
+    // account that has a different computation in flight, and overwrite the
+    // user's ciphertext with the old vote's data.
     require!(
-        ctx.accounts.stake_account.pending_stake,
+        ctx.accounts.stake_account.pending_stake_computation
+            == Some(ctx.accounts.computation_account.key()),
         ErrorCode::InvalidAccountState
     );
 
     // Unlock
     ctx.accounts.stake_account.locked = false;
-    ctx.accounts.stake_account.pending_stake = false;
+    ctx.accounts.stake_account.pending_stake_computation = None;
 
     let stake_data_mxe = res.field_0;
     let stake_data_shared = res.field_1;

@@ -5729,16 +5729,18 @@
             "type": "bool"
           },
           {
-            "name": "pending_stake",
-            "type": "bool"
+            "name": "id",
+            "type": "u32"
+          },
+          {
+            "name": "pending_stake_computation",
+            "type": {
+              "option": "pubkey"
+            }
           },
           {
             "name": "pending_reveal",
             "type": "bool"
-          },
-          {
-            "name": "id",
-            "type": "u32"
           }
         ]
       }

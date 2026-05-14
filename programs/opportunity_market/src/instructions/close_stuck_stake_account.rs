@@ -60,7 +60,10 @@ pub fn close_stuck_stake_account(
     let stake_account = &ctx.accounts.stake_account;
 
     // Only closeable if MPC computation is still in flight (or callback failed/never came)
-    require!(stake_account.pending_stake, ErrorCode::StakeNotStuck);
+    require!(
+        stake_account.pending_stake_computation.is_some(),
+        ErrorCode::StakeNotStuck
+    );
 
     let market = &ctx.accounts.market;
     let amount = stake_account.amount;

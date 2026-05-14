@@ -139,9 +139,14 @@ pub struct StakeAccount {
     pub unstakeable_at_timestamp: Option<u64>,
     pub locked: bool,
     pub stake_reclaimed: bool,               // whether staked tokens have been returned
-    pub pending_stake: bool,                 // true while MPC stake computation is in flight
-    pub pending_reveal: bool,                // true while MPC reveal computation is in flight
     pub id: u32,
+
+    // Computation account pubkey of the in-flight stake computation. 
+    // `Some` means a stake computation is pending; None means no stake is in flight.
+    pub pending_stake_computation: Option<Pubkey>,
+
+    // True while MPC reveal computation is in flight
+    pub pending_reveal: bool,                
 }
 
 #[account]
