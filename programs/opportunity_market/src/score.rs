@@ -5,7 +5,7 @@ use anchor_lang::prelude::*;
 pub const PRECISION: u64 = 10_000;
 
 pub fn calculate_user_score_components(
-    market_opened: u64,
+    option_created: u64,
     reveal_start: u64,
     user_staked_at: u64,
     user_stake_end: u64,
@@ -17,12 +17,12 @@ pub fn calculate_user_score_components(
     let earliness_multiplier = earliness_multiplier as u64;
 
     let total_stake_period = reveal_start
-        .checked_sub(market_opened)
+        .checked_sub(option_created)
         .ok_or(ErrorCode::Overflow)?;
 
-    let stake_since_opening = user_staked_at
-        .checked_sub(market_opened)
-        .ok_or(ErrorCode::Overflow)?
+    // saturating_sub: a stake placed before the option existed gets peak earliness boost
+    let stake_since_creation = user_staked_at
+        .saturating_sub(option_created)
         .max(1);
 
     let actual_stake_duration = user_stake_end
@@ -36,7 +36,7 @@ pub fn calculate_user_score_components(
 
     let earliness_factor = earliness_multiplier
         .checked_sub(
-            stake_since_opening
+            stake_since_creation
                 .min(earliness_cutoff)
                 .checked_mul(boost_range)
                 .ok_or(ErrorCode::Overflow)?
@@ -57,7 +57,7 @@ pub fn calculate_user_score_components(
 }
 
 pub fn calculate_user_score(
-    market_opened: u64,
+    option_created: u64,
     reveal_start: u64,
     user_staked_at: u64,
     user_stake_end: u64,
@@ -66,7 +66,7 @@ pub fn calculate_user_score(
     earliness_multiplier: u16,
 ) -> Result<u64> {
     let (amount, time_pct, earliness) =
-        calculate_user_score_components(market_opened, reveal_start, user_staked_at, user_stake_end, stake_amount, earliness_cutoff_seconds, earliness_multiplier)?;
+        calculate_user_score_components(option_created, reveal_start, user_staked_at, user_stake_end, stake_amount, earliness_cutoff_seconds, earliness_multiplier)?;
 
     // score = amount * time_pct * earliness / PRECISION
     // Use u128 intermediate to avoid overflow
@@ -113,7 +113,7 @@ mod tests {
 
         assert_eq!(amount, STAKE);
         assert_eq!(time_pct, 100);
-        // .max(1) on stake_since_opening shaves one tick off the peak.
+        // .max(1) on stake_since_creation shaves one tick off the peak.
         assert_eq!(earliness, 2 * PRECISION - (PRECISION / ONE_WEEK));
     }
 
@@ -208,7 +208,7 @@ mod tests {
 
         // amount * time_pct(100) * earliness(~15000) / PRECISION
         //   = 1e15 * 100 * 15000 / 10000 ≈ 1.5e16
-        // .max(1) on stake_since_opening shaves off one tick.
+        // .max(1) on stake_since_creation shaves off one tick.
         let expected_earliness = 15_000 - (5_000 / ONE_WEEK);
         let expected = (STAKE as u128) * 100 * (expected_earliness as u128) / (PRECISION as u128);
         assert_eq!(score as u128, expected);
@@ -287,7 +287,7 @@ mod tests {
 
     #[test]
     fn zero_cutoff_does_not_panic_and_gives_no_boost() {
-        // Cutoff = 0 is .max(1)'d internally; any stake_since_opening >= 1 hits the
+        // Cutoff = 0 is .max(1)'d internally; any stake_since_creation >= 1 hits the
         // clamp, so factor = PRECISION (1.0x) regardless of staking time.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let (_, _, earliness) = calculate_user_score_components(
@@ -305,11 +305,10 @@ mod tests {
     }
 
     #[test]
-    fn reveal_before_market_open_errors() {
+    fn reveal_before_option_creation_errors() {
         let r = calculate_user_score(
             MARKET_OPENED,
-
-            // reveal_start < market_opened
+            // reveal_start < option_created
             MARKET_OPENED - 1,
             MARKET_OPENED,
             MARKET_OPENED,
@@ -335,5 +334,25 @@ mod tests {
             MULT_2X,
         );
         assert!(r.is_err());
+    }
+
+    #[test]
+    fn stake_before_option_creation_gets_peak_earliness() {
+        let reveal_start = MARKET_OPENED + ONE_WEEK;
+        let user_staked_at = MARKET_OPENED + 10;
+        let option_created = MARKET_OPENED + 60 * 60;
+
+        let (_, _, earliness) = calculate_user_score_components(
+            option_created,
+            reveal_start,
+            user_staked_at,
+            reveal_start,
+            STAKE,
+            ONE_WEEK,
+            MULT_2X,
+        )
+        .unwrap();
+
+        assert_eq!(earliness, 2 * PRECISION - (PRECISION / ONE_WEEK));
     }
 }

@@ -69,7 +69,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         .unwrap_or(reveal_start);
 
     let user_score = calculate_user_score(
-        open_timestamp,
+        ctx.accounts.option.created_at,
         reveal_start,
         staked_at_timestamp,
         user_stake_end,

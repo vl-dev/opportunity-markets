@@ -213,6 +213,7 @@ pub struct StakeAccount {
 pub struct OpportunityMarketOption {
     pub bump: u8,
     pub id: u64,
+    pub created_at: u64,
 
     // Total tallies, collected in `increment_option_tally`
     pub total_staked: u64,

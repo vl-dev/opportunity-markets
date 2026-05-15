@@ -246,7 +246,7 @@ pub fn stake_callback(
     // stake_account is waiting on. Without this, a stale callback from a
     // previous (closed-then-reborn) account could land on a freshly re-staked
     // account that has a different computation in flight, and overwrite the
-    // user's ciphertext with the old vote's data.
+    // user's ciphertext with the old stake's data.
     require!(
         ctx.accounts.stake_account.pending_stake_computation
             == Some(ctx.accounts.computation_account.key()),
