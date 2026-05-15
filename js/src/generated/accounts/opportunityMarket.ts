@@ -48,12 +48,6 @@ import {
   type OptionOrNullable,
   type ReadonlyUint8Array,
 } from '@solana/kit';
-import {
-  getWinningOptionDecoder,
-  getWinningOptionEncoder,
-  type WinningOption,
-  type WinningOptionArgs,
-} from '../types';
 
 export const OPPORTUNITY_MARKET_DISCRIMINATOR = new Uint8Array([
   207, 103, 169, 160, 157, 215, 97, 224,
@@ -71,20 +65,30 @@ export type OpportunityMarket = {
   creator: Address;
   index: bigint;
   totalOptions: bigint;
+  platform: Address;
   openTimestamp: Option<bigint>;
   timeToStake: bigint;
-  timeToReveal: bigint;
-  selectedOptions: Option<Array<WinningOption>>;
+  resolved: boolean;
+  winningOptionAllocation: number;
   rewardAmount: bigint;
   marketAuthority: Address;
   revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
-  paused: boolean;
-  protocolFeeBp: number;
+  stakingPaused: boolean;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  collectedPlatformFees: bigint;
+  collectedCreatorFees: bigint;
+  marketFeeClaimer: Address;
+  marketResolutionDeadlineSeconds: bigint;
+  minRevealPeriodSeconds: bigint;
+  revealEndedAt: Option<bigint>;
   minStakeAmount: bigint;
 };
 
@@ -93,20 +97,30 @@ export type OpportunityMarketArgs = {
   creator: Address;
   index: number | bigint;
   totalOptions: number | bigint;
+  platform: Address;
   openTimestamp: OptionOrNullable<number | bigint>;
   timeToStake: number | bigint;
-  timeToReveal: number | bigint;
-  selectedOptions: OptionOrNullable<Array<WinningOptionArgs>>;
+  resolved: boolean;
+  winningOptionAllocation: number;
   rewardAmount: number | bigint;
   marketAuthority: Address;
   revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: number | bigint;
+  earlinessMultiplier: number;
   unstakeDelaySeconds: number | bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
-  paused: boolean;
-  protocolFeeBp: number;
+  stakingPaused: boolean;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  collectedPlatformFees: number | bigint;
+  collectedCreatorFees: number | bigint;
+  marketFeeClaimer: Address;
+  marketResolutionDeadlineSeconds: number | bigint;
+  minRevealPeriodSeconds: number | bigint;
+  revealEndedAt: OptionOrNullable<number | bigint>;
   minStakeAmount: number | bigint;
 };
 
@@ -118,23 +132,30 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['creator', getAddressEncoder()],
       ['index', getU64Encoder()],
       ['totalOptions', getU64Encoder()],
+      ['platform', getAddressEncoder()],
       ['openTimestamp', getOptionEncoder(getU64Encoder())],
       ['timeToStake', getU64Encoder()],
-      ['timeToReveal', getU64Encoder()],
-      [
-        'selectedOptions',
-        getOptionEncoder(getArrayEncoder(getWinningOptionEncoder())),
-      ],
+      ['resolved', getBooleanEncoder()],
+      ['winningOptionAllocation', getU8Encoder()],
       ['rewardAmount', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
       ['mint', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
+      ['earlinessMultiplier', getU16Encoder()],
       ['unstakeDelaySeconds', getU64Encoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
-      ['paused', getBooleanEncoder()],
-      ['protocolFeeBp', getU16Encoder()],
+      ['stakingPaused', getBooleanEncoder()],
+      ['platformFeeBp', getU16Encoder()],
+      ['rewardPoolFeeBp', getU16Encoder()],
+      ['creatorFeeBp', getU16Encoder()],
+      ['collectedPlatformFees', getU64Encoder()],
+      ['collectedCreatorFees', getU64Encoder()],
+      ['marketFeeClaimer', getAddressEncoder()],
+      ['marketResolutionDeadlineSeconds', getU64Encoder()],
+      ['minRevealPeriodSeconds', getU64Encoder()],
+      ['revealEndedAt', getOptionEncoder(getU64Encoder())],
       ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
@@ -148,23 +169,30 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['creator', getAddressDecoder()],
     ['index', getU64Decoder()],
     ['totalOptions', getU64Decoder()],
+    ['platform', getAddressDecoder()],
     ['openTimestamp', getOptionDecoder(getU64Decoder())],
     ['timeToStake', getU64Decoder()],
-    ['timeToReveal', getU64Decoder()],
-    [
-      'selectedOptions',
-      getOptionDecoder(getArrayDecoder(getWinningOptionDecoder())),
-    ],
+    ['resolved', getBooleanDecoder()],
+    ['winningOptionAllocation', getU8Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['earlinessMultiplier', getU16Decoder()],
     ['unstakeDelaySeconds', getU64Decoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
-    ['paused', getBooleanDecoder()],
-    ['protocolFeeBp', getU16Decoder()],
+    ['stakingPaused', getBooleanDecoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
+    ['collectedPlatformFees', getU64Decoder()],
+    ['collectedCreatorFees', getU64Decoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
+    ['minRevealPeriodSeconds', getU64Decoder()],
+    ['revealEndedAt', getOptionDecoder(getU64Decoder())],
     ['minStakeAmount', getU64Decoder()],
   ]);
 }

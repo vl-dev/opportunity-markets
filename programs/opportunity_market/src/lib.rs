@@ -27,33 +27,47 @@ pub mod opportunity_market {
         instructions::reveal_stake_comp_def(ctx)
     }
 
-    pub fn init_central_state(
-        ctx: Context<InitCentralState>,
-        protocol_fee_bp: u16,
-        fee_claimer: Pubkey,
+    pub fn init_platform_config(
+        ctx: Context<InitPlatformConfig>,
+        name: String,
+        platform_fee_bp: u16,
+        reward_pool_fee_bp: u16,
+        creator_fee_bp: u16,
+        fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
-        min_time_to_reveal_seconds: u64,
+        min_reveal_period_seconds: u64,
+        market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
-        instructions::init_central_state(
+        instructions::init_platform_config(
             ctx,
-            protocol_fee_bp,
-            fee_claimer,
+            name,
+            platform_fee_bp,
+            reward_pool_fee_bp,
+            creator_fee_bp,
+            fee_claim_authority,
             min_time_to_stake_seconds,
-            min_time_to_reveal_seconds,
+            min_reveal_period_seconds,
+            market_resolution_deadline_seconds,
         )
     }
 
-    pub fn update_central_state(
-        ctx: Context<UpdateCentralState>,
-        protocol_fee_bp: u16,
+    pub fn update_platform_config(
+        ctx: Context<UpdatePlatformConfig>,
+        platform_fee_bp: u16,
+        reward_pool_fee_bp: u16,
+        creator_fee_bp: u16,
         min_time_to_stake_seconds: u64,
-        min_time_to_reveal_seconds: u64,
+        min_reveal_period_seconds: u64,
+        market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
-        instructions::update_central_state(
+        instructions::update_platform_config(
             ctx,
-            protocol_fee_bp,
+            platform_fee_bp,
+            reward_pool_fee_bp,
+            creator_fee_bp,
             min_time_to_stake_seconds,
-            min_time_to_reveal_seconds,
+            min_reveal_period_seconds,
+            market_resolution_deadline_seconds,
         )
     }
 
@@ -63,10 +77,10 @@ pub mod opportunity_market {
         instructions::propose_new_update_authority(ctx)
     }
 
-    pub fn propose_new_fee_claimer(
-        ctx: Context<ProposeNewFeeClaimer>,
+    pub fn propose_new_fee_claim_authority(
+        ctx: Context<ProposeNewFeeClaimAuthority>,
     ) -> Result<()> {
-        instructions::propose_new_fee_claimer(ctx)
+        instructions::propose_new_fee_claim_authority(ctx)
     }
 
     pub fn finalize_new_update_authority(
@@ -75,10 +89,10 @@ pub mod opportunity_market {
         instructions::finalize_new_update_authority(ctx)
     }
 
-    pub fn finalize_new_fee_claimer(
-        ctx: Context<FinalizeNewFeeClaimer>,
+    pub fn finalize_new_fee_claim_authority(
+        ctx: Context<FinalizeNewFeeClaimAuthority>,
     ) -> Result<()> {
-        instructions::finalize_new_fee_claimer(ctx)
+        instructions::finalize_new_fee_claim_authority(ctx)
     }
 
     pub fn cancel_update_authority_change(
@@ -87,41 +101,43 @@ pub mod opportunity_market {
         instructions::cancel_update_authority_change(ctx)
     }
 
-    pub fn cancel_fee_claimer_change(
-        ctx: Context<CancelFeeClaimerChange>,
+    pub fn cancel_fee_claim_authority_change(
+        ctx: Context<CancelFeeClaimAuthorityChange>,
     ) -> Result<()> {
-        instructions::cancel_fee_claimer_change(ctx)
+        instructions::cancel_fee_claim_authority_change(ctx)
     }
 
-    pub fn init_token_vault(ctx: Context<InitTokenVault>) -> Result<()> {
-        instructions::init_token_vault(ctx)
+    pub fn init_allowed_mint(ctx: Context<InitAllowedMint>) -> Result<()> {
+        instructions::init_allowed_mint(ctx)
     }
 
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,
         time_to_stake: u64,
-        time_to_reveal: u64,
         market_authority: Pubkey,
         unstake_delay_seconds: u64,
         authorized_reader_pubkey: [u8; 32],
         allow_closing_early: bool,
         reveal_period_authority: Pubkey,
         earliness_cutoff_seconds: u64,
+        earliness_multiplier: u16,
         min_stake_amount: u64,
+        market_fee_claimer: Pubkey,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
             market_index,
             time_to_stake,
-            time_to_reveal,
             market_authority,
             unstake_delay_seconds,
             authorized_reader_pubkey,
             allow_closing_early,
             reveal_period_authority,
             earliness_cutoff_seconds,
+            earliness_multiplier,
             min_stake_amount,
+            market_fee_claimer,
         )
     }
 
@@ -133,16 +149,24 @@ pub mod opportunity_market {
         instructions::open_market(ctx, open_timestamp)
     }
 
-    pub fn pause_market(ctx: Context<PauseMarket>) -> Result<()> {
-        instructions::pause_market(ctx)
+    pub fn pause_staking(ctx: Context<PauseStaking>) -> Result<()> {
+        instructions::pause_staking(ctx)
     }
 
-    pub fn resume_market(ctx: Context<ResumeMarket>) -> Result<()> {
-        instructions::resume_market(ctx)
+    pub fn resume_staking(ctx: Context<ResumeStaking>) -> Result<()> {
+        instructions::resume_staking(ctx)
     }
 
-    pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Vec<WinningOption>) -> Result<()> {
-        instructions::select_winning_options(ctx, selections)
+    pub fn set_winning_option(
+        ctx: Context<SetWinningOption>,
+        option_id: u64,
+        reward_percentage: u8,
+    ) -> Result<()> {
+        instructions::set_winning_option(ctx, option_id, reward_percentage)
+    }
+
+    pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
+        instructions::resolve_market(ctx)
     }
 
     pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
@@ -175,6 +199,10 @@ pub mod opportunity_market {
 
     pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
         instructions::claim_fees(ctx)
+    }
+
+    pub fn claim_creator_fees(ctx: Context<ClaimCreatorFees>) -> Result<()> {
+        instructions::claim_creator_fees(ctx)
     }
 
     pub fn init_stake_account(

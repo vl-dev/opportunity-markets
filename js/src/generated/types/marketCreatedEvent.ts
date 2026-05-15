@@ -18,6 +18,8 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -31,32 +33,46 @@ import {
 export type MarketCreatedEvent = {
   market: Address;
   creator: Address;
+  platform: Address;
   index: bigint;
   mint: Address;
   timeToStake: bigint;
-  timeToReveal: bigint;
   earlinessCutoffSeconds: bigint;
+  earlinessMultiplier: number;
   marketAuthority: Address;
   authorizedReaderPubkey: Array<number>;
   unstakeDelaySeconds: bigint;
   allowClosingEarly: boolean;
   minStakeAmount: bigint;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  marketFeeClaimer: Address;
+  marketResolutionDeadlineSeconds: bigint;
+  minRevealPeriodSeconds: bigint;
   timestamp: bigint;
 };
 
 export type MarketCreatedEventArgs = {
   market: Address;
   creator: Address;
+  platform: Address;
   index: number | bigint;
   mint: Address;
   timeToStake: number | bigint;
-  timeToReveal: number | bigint;
   earlinessCutoffSeconds: number | bigint;
+  earlinessMultiplier: number;
   marketAuthority: Address;
   authorizedReaderPubkey: Array<number>;
   unstakeDelaySeconds: number | bigint;
   allowClosingEarly: boolean;
   minStakeAmount: number | bigint;
+  platformFeeBp: number;
+  rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  marketFeeClaimer: Address;
+  marketResolutionDeadlineSeconds: number | bigint;
+  minRevealPeriodSeconds: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -64,16 +80,23 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
   return getStructEncoder([
     ['market', getAddressEncoder()],
     ['creator', getAddressEncoder()],
+    ['platform', getAddressEncoder()],
     ['index', getU64Encoder()],
     ['mint', getAddressEncoder()],
     ['timeToStake', getU64Encoder()],
-    ['timeToReveal', getU64Encoder()],
     ['earlinessCutoffSeconds', getU64Encoder()],
+    ['earlinessMultiplier', getU16Encoder()],
     ['marketAuthority', getAddressEncoder()],
     ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['unstakeDelaySeconds', getU64Encoder()],
     ['allowClosingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
+    ['platformFeeBp', getU16Encoder()],
+    ['rewardPoolFeeBp', getU16Encoder()],
+    ['creatorFeeBp', getU16Encoder()],
+    ['marketFeeClaimer', getAddressEncoder()],
+    ['marketResolutionDeadlineSeconds', getU64Encoder()],
+    ['minRevealPeriodSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -82,16 +105,23 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
   return getStructDecoder([
     ['market', getAddressDecoder()],
     ['creator', getAddressDecoder()],
+    ['platform', getAddressDecoder()],
     ['index', getU64Decoder()],
     ['mint', getAddressDecoder()],
     ['timeToStake', getU64Decoder()],
-    ['timeToReveal', getU64Decoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['earlinessMultiplier', getU16Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['unstakeDelaySeconds', getU64Decoder()],
     ['allowClosingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
+    ['platformFeeBp', getU16Decoder()],
+    ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
+    ['minRevealPeriodSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

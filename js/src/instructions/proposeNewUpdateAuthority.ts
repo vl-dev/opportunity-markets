@@ -7,15 +7,16 @@ import { type BaseInstructionParams } from "./instructionParams";
 
 export interface ProposeNewUpdateAuthorityParams extends BaseInstructionParams {
   updateAuthority: TransactionSigner;
+  platformConfig: Address;
   proposedAuthority: Address;
 }
 
 export async function proposeNewUpdateAuthority(
-  input: ProposeNewUpdateAuthorityParams
+  input: ProposeNewUpdateAuthorityParams,
 ): Promise<ProposeNewUpdateAuthorityInstruction<string>> {
   const { programAddress, ...params } = input;
   return getProposeNewUpdateAuthorityInstructionAsync(
     params,
-    programAddress ? { programAddress } : undefined
+    programAddress ? { programAddress } : undefined,
   );
 }

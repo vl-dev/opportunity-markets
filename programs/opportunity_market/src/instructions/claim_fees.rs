@@ -5,38 +5,37 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, FeesClaimedEvent};
-use crate::constants::{CENTRAL_STATE_SEED, TOKEN_VAULT_SEED};
-use crate::state::{CentralState, TokenVault};
+use crate::constants::OPPORTUNITY_MARKET_SEED;
+use crate::state::{OpportunityMarket, PlatformConfig};
 
 #[derive(Accounts)]
 pub struct ClaimFees<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        seeds = [CENTRAL_STATE_SEED],
-        bump = central_state.bump,
-        constraint = signer.key() == central_state.fee_claimer @ ErrorCode::Unauthorized,
+        mut,
+        seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
+        bump = market.bump,
+        constraint = market.collected_platform_fees > 0 @ ErrorCode::NoFeesToClaim,
+        constraint = market.platform == platform_config.key() @ ErrorCode::Unauthorized,
     )]
-    pub central_state: Box<Account<'info, CentralState>>,
+    pub market: Box<Account<'info, OpportunityMarket>>,
 
+    #[account(
+        constraint = platform_config.fee_claim_authority == signer.key() @ ErrorCode::Unauthorized,
+    )]
+    pub platform_config: Box<Account<'info, PlatformConfig>>,
+
+    #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
-        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
-        bump = token_vault.bump,
-        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
-        constraint = token_vault.collected_fees > 0 @ ErrorCode::NoFeesToClaim,
-    )]
-    pub token_vault: Box<Account<'info, TokenVault>>,
-
-    #[account(
-        mut,
         associated_token::mint = token_mint,
-        associated_token::authority = token_vault,
+        associated_token::authority = market,
         associated_token::token_program = token_program,
     )]
-    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
@@ -49,35 +48,38 @@ pub struct ClaimFees<'info> {
 }
 
 pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
-    let fees = ctx.accounts.token_vault.collected_fees;
+    let fees = ctx.accounts.market.collected_platform_fees;
 
-    let vault_bump = ctx.accounts.token_vault.bump;
-    let mint_key = ctx.accounts.token_mint.key();
-    let signer_seeds: &[&[&[u8]]] = &[&[
-        TOKEN_VAULT_SEED,
-        mint_key.as_ref(),
-        &[vault_bump],
+    let creator = ctx.accounts.market.creator;
+    let index_bytes = ctx.accounts.market.index.to_le_bytes();
+    let market_bump = ctx.accounts.market.bump;
+    let market_seeds: &[&[&[u8]]] = &[&[
+        OPPORTUNITY_MARKET_SEED,
+        creator.as_ref(),
+        &index_bytes,
+        &[market_bump],
     ]];
 
     transfer_checked(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
-                from: ctx.accounts.token_vault_ata.to_account_info(),
+                from: ctx.accounts.market_token_ata.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
                 to: ctx.accounts.destination_token_account.to_account_info(),
-                authority: ctx.accounts.token_vault.to_account_info(),
+                authority: ctx.accounts.market.to_account_info(),
             },
-            signer_seeds,
+            market_seeds,
         ),
         fees,
         ctx.accounts.token_mint.decimals,
     )?;
 
-    ctx.accounts.token_vault.collected_fees = 0;
+    ctx.accounts.market.collected_platform_fees = 0;
 
     emit_ts!(FeesClaimedEvent {
-        token_vault: ctx.accounts.token_vault.key(),
+        market: ctx.accounts.market.key(),
+        platform: ctx.accounts.platform_config.key(),
         mint: ctx.accounts.token_mint.key(),
         destination: ctx.accounts.destination_token_account.key(),
         amount: fees,

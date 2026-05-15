@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
+#[cfg(feature = "production-settings")]
 use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
+#[cfg(feature = "production-settings")]
 use arcium_macros::circuit_hash;
 
 use crate::ID;
@@ -26,7 +28,7 @@ pub struct StakeCompDef<'info> {
 }
 
 pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
-    #[cfg(feature = "hosted-compdefs")]
+    #[cfg(feature = "production-settings")]
     {
         init_comp_def(
             ctx.accounts,
@@ -37,7 +39,7 @@ pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
             None,
         )?;
     }
-    #[cfg(not(feature = "hosted-compdefs"))]
+    #[cfg(not(feature = "production-settings"))]
     {
         init_comp_def(ctx.accounts, None, None)?;
     }
@@ -65,7 +67,7 @@ pub struct RevealStakeCompDef<'info> {
 }
 
 pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
-    #[cfg(feature = "hosted-compdefs")]
+    #[cfg(feature = "production-settings")]
     {
         init_comp_def(
             ctx.accounts,
@@ -76,7 +78,7 @@ pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
             None,
         )?;
     }
-    #[cfg(not(feature = "hosted-compdefs"))]
+    #[cfg(not(feature = "production-settings"))]
     {
         init_comp_def(ctx.accounts, None, None)?;
     }

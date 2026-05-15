@@ -13,7 +13,7 @@ pub struct UnstakeEarly<'info> {
 
     #[account(
         constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
-        constraint = market.selected_options.is_none() @ ErrorCode::WinnerAlreadySelected,
+        constraint = !market.resolved @ ErrorCode::WinnerAlreadySelected,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
@@ -43,7 +43,7 @@ pub fn unstake_early(
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakeWindowMismatch
+        ErrorCode::TimeWindowMismatch
     );
 
     // Set the timestamp when stake becomes unstakeable

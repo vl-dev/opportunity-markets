@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{CENTRAL_STATE_SEED, TIMELOCK_DELAY_SECONDS, TIMELOCKED_CHANGE_SEED, UPDATE_AUTHORITY_SEED};
+use crate::constants::{TIMELOCK_DELAY_SECONDS, TIMELOCKED_CHANGE_SEED, UPDATE_AUTHORITY_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, AccountChangeProposedEvent};
-use crate::state::{CentralState, TimelockedAccountChange};
+use crate::state::{PlatformConfig, TimelockedAccountChange};
 
 #[derive(Accounts)]
 pub struct ProposeNewUpdateAuthority<'info> {
@@ -11,11 +11,9 @@ pub struct ProposeNewUpdateAuthority<'info> {
     pub update_authority: Signer<'info>,
 
     #[account(
-        seeds = [CENTRAL_STATE_SEED],
-        bump = central_state.bump,
-        constraint = central_state.update_authority == update_authority.key() @ ErrorCode::Unauthorized,
+        has_one = update_authority @ ErrorCode::Unauthorized,
     )]
-    pub central_state: Account<'info, CentralState>,
+    pub platform_config: Account<'info, PlatformConfig>,
 
     /// CHECK: Stored as proposed value; must co-sign at finalize time.
     pub proposed_authority: UncheckedAccount<'info>,
@@ -24,7 +22,7 @@ pub struct ProposeNewUpdateAuthority<'info> {
         init,
         payer = update_authority,
         space = 8 + TimelockedAccountChange::INIT_SPACE,
-        seeds = [TIMELOCKED_CHANGE_SEED, UPDATE_AUTHORITY_SEED, central_state.key().as_ref()],
+        seeds = [TIMELOCKED_CHANGE_SEED, UPDATE_AUTHORITY_SEED, platform_config.key().as_ref()],
         bump,
     )]
     pub timelocked_change: Account<'info, TimelockedAccountChange>,
@@ -41,12 +39,12 @@ pub fn propose_new_update_authority(ctx: Context<ProposeNewUpdateAuthority>) -> 
 
     let change = &mut ctx.accounts.timelocked_change;
     change.bump = ctx.bumps.timelocked_change;
-    change.current_value = ctx.accounts.central_state.update_authority;
+    change.current_value = ctx.accounts.platform_config.update_authority;
     change.proposed_value = ctx.accounts.proposed_authority.key();
     change.execute_after = execute_after;
 
     emit_ts!(AccountChangeProposedEvent {
-        central_state: ctx.accounts.central_state.key(),
+        platform_config: ctx.accounts.platform_config.key(),
         change_type: "update_authority".to_string(),
         current_value: change.current_value,
         proposed_value: change.proposed_value,

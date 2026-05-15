@@ -13,7 +13,7 @@ pub struct AddMarketOption<'info> {
 
     #[account(
         mut,
-        constraint = market.selected_options.is_none() @ ErrorCode::WinnerAlreadySelected,
+        constraint = !market.resolved @ ErrorCode::WinnerAlreadySelected,
         has_one = market_authority @ ErrorCode::Unauthorized,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
@@ -42,7 +42,7 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
             .ok_or(ErrorCode::Overflow)?;
         require!(
             current_timestamp <= stake_end_timestamp,
-            ErrorCode::StakeWindowMismatch
+            ErrorCode::TimeWindowMismatch
         );
     }
 
@@ -53,6 +53,7 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
     let option = &mut ctx.accounts.option;
     option.bump = ctx.bumps.option;
     option.id = option_id;
+    option.created_at = current_timestamp;
 
     emit_ts!(MarketOptionCreatedEvent {
         option: option.key(),

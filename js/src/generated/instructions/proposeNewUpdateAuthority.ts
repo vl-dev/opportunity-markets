@@ -52,7 +52,7 @@ export function getProposeNewUpdateAuthorityDiscriminatorBytes() {
 export type ProposeNewUpdateAuthorityInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountUpdateAuthority extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountProposedAuthority extends string | AccountMeta<string> = string,
   TAccountTimelockedChange extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -66,9 +66,9 @@ export type ProposeNewUpdateAuthorityInstruction<
         ? WritableSignerAccount<TAccountUpdateAuthority> &
             AccountSignerMeta<TAccountUpdateAuthority>
         : TAccountUpdateAuthority,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountPlatformConfig extends string
+        ? ReadonlyAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountProposedAuthority extends string
         ? ReadonlyAccount<TAccountProposedAuthority>
         : TAccountProposedAuthority,
@@ -116,13 +116,13 @@ export function getProposeNewUpdateAuthorityInstructionDataCodec(): FixedSizeCod
 
 export type ProposeNewUpdateAuthorityAsyncInput<
   TAccountUpdateAuthority extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountProposedAuthority extends string = string,
   TAccountTimelockedChange extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
-  centralState?: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   proposedAuthority: Address<TAccountProposedAuthority>;
   timelockedChange?: Address<TAccountTimelockedChange>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -130,7 +130,7 @@ export type ProposeNewUpdateAuthorityAsyncInput<
 
 export async function getProposeNewUpdateAuthorityInstructionAsync<
   TAccountUpdateAuthority extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountProposedAuthority extends string,
   TAccountTimelockedChange extends string,
   TAccountSystemProgram extends string,
@@ -138,7 +138,7 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
 >(
   input: ProposeNewUpdateAuthorityAsyncInput<
     TAccountUpdateAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountProposedAuthority,
     TAccountTimelockedChange,
     TAccountSystemProgram
@@ -148,7 +148,7 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   ProposeNewUpdateAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountProposedAuthority,
     TAccountTimelockedChange,
     TAccountSystemProgram
@@ -161,7 +161,7 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     proposedAuthority: {
       value: input.proposedAuthority ?? null,
       isWritable: false,
@@ -178,18 +178,6 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.timelockedChange.value) {
     accounts.timelockedChange.value = await getProgramDerivedAddress({
       programAddress,
@@ -206,7 +194,9 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
             116, 121,
           ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.centralState.value)),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
       ],
     });
   }
@@ -219,7 +209,7 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.updateAuthority),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.proposedAuthority),
       getAccountMeta(accounts.timelockedChange),
       getAccountMeta(accounts.systemProgram),
@@ -229,7 +219,7 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
   } as ProposeNewUpdateAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountProposedAuthority,
     TAccountTimelockedChange,
     TAccountSystemProgram
@@ -238,13 +228,13 @@ export async function getProposeNewUpdateAuthorityInstructionAsync<
 
 export type ProposeNewUpdateAuthorityInput<
   TAccountUpdateAuthority extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountProposedAuthority extends string = string,
   TAccountTimelockedChange extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
-  centralState: Address<TAccountCentralState>;
+  platformConfig: Address<TAccountPlatformConfig>;
   proposedAuthority: Address<TAccountProposedAuthority>;
   timelockedChange: Address<TAccountTimelockedChange>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -252,7 +242,7 @@ export type ProposeNewUpdateAuthorityInput<
 
 export function getProposeNewUpdateAuthorityInstruction<
   TAccountUpdateAuthority extends string,
-  TAccountCentralState extends string,
+  TAccountPlatformConfig extends string,
   TAccountProposedAuthority extends string,
   TAccountTimelockedChange extends string,
   TAccountSystemProgram extends string,
@@ -260,7 +250,7 @@ export function getProposeNewUpdateAuthorityInstruction<
 >(
   input: ProposeNewUpdateAuthorityInput<
     TAccountUpdateAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountProposedAuthority,
     TAccountTimelockedChange,
     TAccountSystemProgram
@@ -269,7 +259,7 @@ export function getProposeNewUpdateAuthorityInstruction<
 ): ProposeNewUpdateAuthorityInstruction<
   TProgramAddress,
   TAccountUpdateAuthority,
-  TAccountCentralState,
+  TAccountPlatformConfig,
   TAccountProposedAuthority,
   TAccountTimelockedChange,
   TAccountSystemProgram
@@ -281,7 +271,7 @@ export function getProposeNewUpdateAuthorityInstruction<
   // Original accounts.
   const originalAccounts = {
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     proposedAuthority: {
       value: input.proposedAuthority ?? null,
       isWritable: false,
@@ -307,7 +297,7 @@ export function getProposeNewUpdateAuthorityInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.updateAuthority),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.proposedAuthority),
       getAccountMeta(accounts.timelockedChange),
       getAccountMeta(accounts.systemProgram),
@@ -317,7 +307,7 @@ export function getProposeNewUpdateAuthorityInstruction<
   } as ProposeNewUpdateAuthorityInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
-    TAccountCentralState,
+    TAccountPlatformConfig,
     TAccountProposedAuthority,
     TAccountTimelockedChange,
     TAccountSystemProgram
@@ -331,7 +321,7 @@ export type ParsedProposeNewUpdateAuthorityInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     updateAuthority: TAccountMetas[0];
-    centralState: TAccountMetas[1];
+    platformConfig: TAccountMetas[1];
     proposedAuthority: TAccountMetas[2];
     timelockedChange: TAccountMetas[3];
     systemProgram: TAccountMetas[4];
@@ -361,7 +351,7 @@ export function parseProposeNewUpdateAuthorityInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       updateAuthority: getNextAccount(),
-      centralState: getNextAccount(),
+      platformConfig: getNextAccount(),
       proposedAuthority: getNextAccount(),
       timelockedChange: getNextAccount(),
       systemProgram: getNextAccount(),

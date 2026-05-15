@@ -15,7 +15,7 @@ import {
   type Signature,
 } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
-import { createMarket } from "../js/src";
+import { createMarket, getPlatformConfigAddress, getOpportunityMarketAddress } from "../js/src";
 import config from "./market.json";
 import * as fs from "fs";
 import * as os from "os";
@@ -80,25 +80,38 @@ async function main() {
     throw new Error(`authorizedReaderPubkey must be 32 bytes, got ${authorizedReaderPubkey.length}`);
   }
 
+  const [platformConfigAddress] = await getPlatformConfigAddress(
+    payer.address,
+    config.platformName,
+    PROGRAM_ID,
+  );
+
   console.log(`\nCreating market (index: ${marketIndex})...`);
 
   const createMarketIx = await createMarket({
     creator: payer,
+    platformConfig: platformConfigAddress,
     tokenMint: address(TOKEN_MINT_ARG),
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: BigInt(config.timeToStake),
-    timeToReveal: BigInt(config.timeToReveal),
     marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
     unstakeDelaySeconds: BigInt(config.unstakeDelaySeconds),
     authorizedReaderPubkey,
     allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
+    earlinessMultiplier: config.earlinessMultiplier ?? 10_000,
     minStakeAmount: BigInt(config.minStakeAmount ?? 0),
+    marketFeeClaimer: config.marketFeeClaimer ? address(config.marketFeeClaimer) : payer.address,
     programAddress: PROGRAM_ID,
   });
 
-  const marketAddress = createMarketIx.accounts[2].address;
+  const [marketAddress] = await getOpportunityMarketAddress(
+    payer.address,
+    marketIndex,
+    PROGRAM_ID,
+  );
 
   const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
 

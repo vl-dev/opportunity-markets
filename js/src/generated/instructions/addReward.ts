@@ -58,8 +58,7 @@ export type AddRewardInstruction<
   TAccountSponsorAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
   TAccountSponsorTokenAccount extends string | AccountMeta<string> = string,
-  TAccountTokenVault extends string | AccountMeta<string> = string,
-  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
@@ -84,12 +83,9 @@ export type AddRewardInstruction<
       TAccountSponsorTokenAccount extends string
         ? WritableAccount<TAccountSponsorTokenAccount>
         : TAccountSponsorTokenAccount,
-      TAccountTokenVault extends string
-        ? ReadonlyAccount<TAccountTokenVault>
-        : TAccountTokenVault,
-      TAccountTokenVaultAta extends string
-        ? WritableAccount<TAccountTokenVaultAta>
-        : TAccountTokenVaultAta,
+      TAccountMarketTokenAta extends string
+        ? WritableAccount<TAccountMarketTokenAta>
+        : TAccountMarketTokenAta,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -146,8 +142,7 @@ export type AddRewardAsyncInput<
   TAccountSponsorAccount extends string = string,
   TAccountTokenMint extends string = string,
   TAccountSponsorTokenAccount extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -156,9 +151,8 @@ export type AddRewardAsyncInput<
   sponsorAccount?: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
   sponsorTokenAccount: Address<TAccountSponsorTokenAccount>;
-  tokenVault?: Address<TAccountTokenVault>;
-  /** Token vault ATA holding all program-held tokens for this mint. */
-  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  /** Market-owned ATA holding all program-held tokens for this market. */
+  marketTokenAta?: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   amount: AddRewardInstructionDataArgs['amount'];
@@ -171,8 +165,7 @@ export async function getAddRewardInstructionAsync<
   TAccountSponsorAccount extends string,
   TAccountTokenMint extends string,
   TAccountSponsorTokenAccount extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -183,8 +176,7 @@ export async function getAddRewardInstructionAsync<
     TAccountSponsorAccount,
     TAccountTokenMint,
     TAccountSponsorTokenAccount,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -197,8 +189,7 @@ export async function getAddRewardInstructionAsync<
     TAccountSponsorAccount,
     TAccountTokenMint,
     TAccountSponsorTokenAccount,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >
@@ -217,8 +208,7 @@ export async function getAddRewardInstructionAsync<
       value: input.sponsorTokenAccount ?? null,
       isWritable: true,
     },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -243,23 +233,12 @@ export async function getAddRewardInstructionAsync<
       ],
     });
   }
-  if (!accounts.tokenVault.value) {
-    accounts.tokenVault.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-      ],
-    });
-  }
-  if (!accounts.tokenVaultAta.value) {
-    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+  if (!accounts.marketTokenAta.value) {
+    accounts.marketTokenAta.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.market.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
@@ -278,8 +257,7 @@ export async function getAddRewardInstructionAsync<
       getAccountMeta(accounts.sponsorAccount),
       getAccountMeta(accounts.tokenMint),
       getAccountMeta(accounts.sponsorTokenAccount),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -294,8 +272,7 @@ export async function getAddRewardInstructionAsync<
     TAccountSponsorAccount,
     TAccountTokenMint,
     TAccountSponsorTokenAccount,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -307,8 +284,7 @@ export type AddRewardInput<
   TAccountSponsorAccount extends string = string,
   TAccountTokenMint extends string = string,
   TAccountSponsorTokenAccount extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -317,9 +293,8 @@ export type AddRewardInput<
   sponsorAccount: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
   sponsorTokenAccount: Address<TAccountSponsorTokenAccount>;
-  tokenVault: Address<TAccountTokenVault>;
-  /** Token vault ATA holding all program-held tokens for this mint. */
-  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  /** Market-owned ATA holding all program-held tokens for this market. */
+  marketTokenAta: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   amount: AddRewardInstructionDataArgs['amount'];
@@ -332,8 +307,7 @@ export function getAddRewardInstruction<
   TAccountSponsorAccount extends string,
   TAccountTokenMint extends string,
   TAccountSponsorTokenAccount extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -344,8 +318,7 @@ export function getAddRewardInstruction<
     TAccountSponsorAccount,
     TAccountTokenMint,
     TAccountSponsorTokenAccount,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -357,8 +330,7 @@ export function getAddRewardInstruction<
   TAccountSponsorAccount,
   TAccountTokenMint,
   TAccountSponsorTokenAccount,
-  TAccountTokenVault,
-  TAccountTokenVaultAta,
+  TAccountMarketTokenAta,
   TAccountTokenProgram,
   TAccountSystemProgram
 > {
@@ -376,8 +348,7 @@ export function getAddRewardInstruction<
       value: input.sponsorTokenAccount ?? null,
       isWritable: true,
     },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -403,8 +374,7 @@ export function getAddRewardInstruction<
       getAccountMeta(accounts.sponsorAccount),
       getAccountMeta(accounts.tokenMint),
       getAccountMeta(accounts.sponsorTokenAccount),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -419,8 +389,7 @@ export function getAddRewardInstruction<
     TAccountSponsorAccount,
     TAccountTokenMint,
     TAccountSponsorTokenAccount,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -437,11 +406,10 @@ export type ParsedAddRewardInstruction<
     sponsorAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
     sponsorTokenAccount: TAccountMetas[4];
-    tokenVault: TAccountMetas[5];
-    /** Token vault ATA holding all program-held tokens for this mint. */
-    tokenVaultAta: TAccountMetas[6];
-    tokenProgram: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
+    /** Market-owned ATA holding all program-held tokens for this market. */
+    marketTokenAta: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
   };
   data: AddRewardInstructionData;
 };
@@ -454,7 +422,7 @@ export function parseAddRewardInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedAddRewardInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -472,8 +440,7 @@ export function parseAddRewardInstruction<
       sponsorAccount: getNextAccount(),
       tokenMint: getNextAccount(),
       sponsorTokenAccount: getNextAccount(),
-      tokenVault: getNextAccount(),
-      tokenVaultAta: getNextAccount(),
+      marketTokenAta: getNextAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },

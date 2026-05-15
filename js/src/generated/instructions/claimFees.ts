@@ -50,10 +50,10 @@ export function getClaimFeesDiscriminatorBytes() {
 export type ClaimFeesInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
+  TAccountMarket extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountTokenVault extends string | AccountMeta<string> = string,
-  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
   TAccountDestinationTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -65,18 +65,18 @@ export type ClaimFeesInstruction<
         ? ReadonlySignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
+      TAccountMarket extends string
+        ? WritableAccount<TAccountMarket>
+        : TAccountMarket,
+      TAccountPlatformConfig extends string
+        ? ReadonlyAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountTokenVault extends string
-        ? WritableAccount<TAccountTokenVault>
-        : TAccountTokenVault,
-      TAccountTokenVaultAta extends string
-        ? WritableAccount<TAccountTokenVaultAta>
-        : TAccountTokenVaultAta,
+      TAccountMarketTokenAta extends string
+        ? WritableAccount<TAccountMarketTokenAta>
+        : TAccountMarketTokenAta,
       TAccountDestinationTokenAccount extends string
         ? WritableAccount<TAccountDestinationTokenAccount>
         : TAccountDestinationTokenAccount,
@@ -116,38 +116,38 @@ export function getClaimFeesInstructionDataCodec(): FixedSizeCodec<
 
 export type ClaimFeesAsyncInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountMarket extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountDestinationTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState?: Address<TAccountCentralState>;
+  market: Address<TAccountMarket>;
+  platformConfig: Address<TAccountPlatformConfig>;
   tokenMint: Address<TAccountTokenMint>;
-  tokenVault?: Address<TAccountTokenVault>;
-  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  marketTokenAta?: Address<TAccountMarketTokenAta>;
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
 };
 
 export async function getClaimFeesInstructionAsync<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountMarket extends string,
+  TAccountPlatformConfig extends string,
   TAccountTokenMint extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountDestinationTokenAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: ClaimFeesAsyncInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountMarket,
+    TAccountPlatformConfig,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountDestinationTokenAccount,
     TAccountTokenProgram
   >,
@@ -156,10 +156,10 @@ export async function getClaimFeesInstructionAsync<
   ClaimFeesInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountMarket,
+    TAccountPlatformConfig,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountDestinationTokenAccount,
     TAccountTokenProgram
   >
@@ -171,10 +171,10 @@ export async function getClaimFeesInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: false },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    market: { value: input.market ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     destinationTokenAccount: {
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
@@ -187,35 +187,12 @@ export async function getClaimFeesInstructionAsync<
   >;
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
-  if (!accounts.tokenVault.value) {
-    accounts.tokenVault.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-      ],
-    });
-  }
-  if (!accounts.tokenVaultAta.value) {
-    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+  if (!accounts.marketTokenAta.value) {
+    accounts.marketTokenAta.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.market.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
@@ -226,10 +203,10 @@ export async function getClaimFeesInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.market),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.destinationTokenAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -238,10 +215,10 @@ export async function getClaimFeesInstructionAsync<
   } as ClaimFeesInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountMarket,
+    TAccountPlatformConfig,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountDestinationTokenAccount,
     TAccountTokenProgram
   >);
@@ -249,38 +226,38 @@ export async function getClaimFeesInstructionAsync<
 
 export type ClaimFeesInput<
   TAccountSigner extends string = string,
-  TAccountCentralState extends string = string,
+  TAccountMarket extends string = string,
+  TAccountPlatformConfig extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountDestinationTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
-  centralState: Address<TAccountCentralState>;
+  market: Address<TAccountMarket>;
+  platformConfig: Address<TAccountPlatformConfig>;
   tokenMint: Address<TAccountTokenMint>;
-  tokenVault: Address<TAccountTokenVault>;
-  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  marketTokenAta: Address<TAccountMarketTokenAta>;
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
 };
 
 export function getClaimFeesInstruction<
   TAccountSigner extends string,
-  TAccountCentralState extends string,
+  TAccountMarket extends string,
+  TAccountPlatformConfig extends string,
   TAccountTokenMint extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountDestinationTokenAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: ClaimFeesInput<
     TAccountSigner,
-    TAccountCentralState,
+    TAccountMarket,
+    TAccountPlatformConfig,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountDestinationTokenAccount,
     TAccountTokenProgram
   >,
@@ -288,10 +265,10 @@ export function getClaimFeesInstruction<
 ): ClaimFeesInstruction<
   TProgramAddress,
   TAccountSigner,
-  TAccountCentralState,
+  TAccountMarket,
+  TAccountPlatformConfig,
   TAccountTokenMint,
-  TAccountTokenVault,
-  TAccountTokenVaultAta,
+  TAccountMarketTokenAta,
   TAccountDestinationTokenAccount,
   TAccountTokenProgram
 > {
@@ -302,10 +279,10 @@ export function getClaimFeesInstruction<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: false },
-    centralState: { value: input.centralState ?? null, isWritable: false },
+    market: { value: input.market ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     destinationTokenAccount: {
       value: input.destinationTokenAccount ?? null,
       isWritable: true,
@@ -321,10 +298,10 @@ export function getClaimFeesInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.centralState),
+      getAccountMeta(accounts.market),
+      getAccountMeta(accounts.platformConfig),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.destinationTokenAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -333,10 +310,10 @@ export function getClaimFeesInstruction<
   } as ClaimFeesInstruction<
     TProgramAddress,
     TAccountSigner,
-    TAccountCentralState,
+    TAccountMarket,
+    TAccountPlatformConfig,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountDestinationTokenAccount,
     TAccountTokenProgram
   >);
@@ -349,10 +326,10 @@ export type ParsedClaimFeesInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    centralState: TAccountMetas[1];
-    tokenMint: TAccountMetas[2];
-    tokenVault: TAccountMetas[3];
-    tokenVaultAta: TAccountMetas[4];
+    market: TAccountMetas[1];
+    platformConfig: TAccountMetas[2];
+    tokenMint: TAccountMetas[3];
+    marketTokenAta: TAccountMetas[4];
     destinationTokenAccount: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];
   };
@@ -381,10 +358,10 @@ export function parseClaimFeesInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
-      centralState: getNextAccount(),
+      market: getNextAccount(),
+      platformConfig: getNextAccount(),
       tokenMint: getNextAccount(),
-      tokenVault: getNextAccount(),
-      tokenVaultAta: getNextAccount(),
+      marketTokenAta: getNextAccount(),
       destinationTokenAccount: getNextAccount(),
       tokenProgram: getNextAccount(),
     },

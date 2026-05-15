@@ -27,7 +27,7 @@ import {
 } from '@solana/kit';
 
 export type AccountChangeFinalizedEvent = {
-  centralState: Address;
+  platformConfig: Address;
   changeType: string;
   oldValue: Address;
   newValue: Address;
@@ -35,7 +35,7 @@ export type AccountChangeFinalizedEvent = {
 };
 
 export type AccountChangeFinalizedEventArgs = {
-  centralState: Address;
+  platformConfig: Address;
   changeType: string;
   oldValue: Address;
   newValue: Address;
@@ -44,7 +44,7 @@ export type AccountChangeFinalizedEventArgs = {
 
 export function getAccountChangeFinalizedEventEncoder(): Encoder<AccountChangeFinalizedEventArgs> {
   return getStructEncoder([
-    ['centralState', getAddressEncoder()],
+    ['platformConfig', getAddressEncoder()],
     ['changeType', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ['oldValue', getAddressEncoder()],
     ['newValue', getAddressEncoder()],
@@ -54,7 +54,7 @@ export function getAccountChangeFinalizedEventEncoder(): Encoder<AccountChangeFi
 
 export function getAccountChangeFinalizedEventDecoder(): Decoder<AccountChangeFinalizedEvent> {
   return getStructDecoder([
-    ['centralState', getAddressDecoder()],
+    ['platformConfig', getAddressDecoder()],
     ['changeType', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['oldValue', getAddressDecoder()],
     ['newValue', getAddressDecoder()],

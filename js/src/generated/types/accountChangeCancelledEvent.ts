@@ -27,7 +27,7 @@ import {
 } from '@solana/kit';
 
 export type AccountChangeCancelledEvent = {
-  centralState: Address;
+  platformConfig: Address;
   changeType: string;
   cancelledBy: Address;
   proposedValue: Address;
@@ -35,7 +35,7 @@ export type AccountChangeCancelledEvent = {
 };
 
 export type AccountChangeCancelledEventArgs = {
-  centralState: Address;
+  platformConfig: Address;
   changeType: string;
   cancelledBy: Address;
   proposedValue: Address;
@@ -44,7 +44,7 @@ export type AccountChangeCancelledEventArgs = {
 
 export function getAccountChangeCancelledEventEncoder(): Encoder<AccountChangeCancelledEventArgs> {
   return getStructEncoder([
-    ['centralState', getAddressEncoder()],
+    ['platformConfig', getAddressEncoder()],
     ['changeType', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ['cancelledBy', getAddressEncoder()],
     ['proposedValue', getAddressEncoder()],
@@ -54,7 +54,7 @@ export function getAccountChangeCancelledEventEncoder(): Encoder<AccountChangeCa
 
 export function getAccountChangeCancelledEventDecoder(): Decoder<AccountChangeCancelledEvent> {
   return getStructDecoder([
-    ['centralState', getAddressDecoder()],
+    ['platformConfig', getAddressDecoder()],
     ['changeType', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['cancelledBy', getAddressDecoder()],
     ['proposedValue', getAddressDecoder()],

@@ -67,7 +67,7 @@ export type StakeCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountStakeAccount extends string | AccountMeta<string> = string,
-  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountMarket extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -94,9 +94,9 @@ export type StakeCallbackInstruction<
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
-      TAccountTokenVault extends string
-        ? WritableAccount<TAccountTokenVault>
-        : TAccountTokenVault,
+      TAccountMarket extends string
+        ? WritableAccount<TAccountMarket>
+        : TAccountMarket,
       ...TRemainingAccounts,
     ]
   >;
@@ -203,7 +203,7 @@ export type StakeCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountStakeAccount extends string = string,
-  TAccountTokenVault extends string = string,
+  TAccountMarket extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -212,7 +212,7 @@ export type StakeCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   stakeAccount: Address<TAccountStakeAccount>;
-  tokenVault: Address<TAccountTokenVault>;
+  market: Address<TAccountMarket>;
   output: StakeCallbackInstructionDataArgs['output'];
 };
 
@@ -224,7 +224,7 @@ export function getStakeCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountStakeAccount extends string,
-  TAccountTokenVault extends string,
+  TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: StakeCallbackInput<
@@ -235,7 +235,7 @@ export function getStakeCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountStakeAccount,
-    TAccountTokenVault
+    TAccountMarket
   >,
   config?: { programAddress?: TProgramAddress }
 ): StakeCallbackInstruction<
@@ -247,7 +247,7 @@ export function getStakeCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountStakeAccount,
-  TAccountTokenVault
+  TAccountMarket
 > {
   // Program address.
   const programAddress =
@@ -268,7 +268,7 @@ export function getStakeCallbackInstruction<
       isWritable: false,
     },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    market: { value: input.market ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -298,7 +298,7 @@ export function getStakeCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.stakeAccount),
-      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.market),
     ],
     data: getStakeCallbackInstructionDataEncoder().encode(
       args as StakeCallbackInstructionDataArgs
@@ -313,7 +313,7 @@ export function getStakeCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountStakeAccount,
-    TAccountTokenVault
+    TAccountMarket
   >);
 }
 
@@ -330,7 +330,7 @@ export type ParsedStakeCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     stakeAccount: TAccountMetas[6];
-    tokenVault: TAccountMetas[7];
+    market: TAccountMetas[7];
   };
   data: StakeCallbackInstructionData;
 };
@@ -363,7 +363,7 @@ export function parseStakeCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       stakeAccount: getNextAccount(),
-      tokenVault: getNextAccount(),
+      market: getNextAccount(),
     },
     data: getStakeCallbackInstructionDataDecoder().decode(instruction.data),
   };

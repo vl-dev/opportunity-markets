@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StuckStakeClosedEvent};
-use crate::constants::{STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
-use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
+use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
+use crate::state::{OpportunityMarket, StakeAccount};
 
 #[derive(Accounts)]
 #[instruction(stake_account_id: u32)]
@@ -14,6 +14,10 @@ pub struct CloseStuckStakeAccount<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    #[account(
+        seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
+        bump = market.bump,
+    )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
     #[account(
@@ -39,19 +43,11 @@ pub struct CloseStuckStakeAccount<'info> {
 
     #[account(
         mut,
-        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
-        bump = token_vault.bump,
-        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
-    )]
-    pub token_vault: Box<Account<'info, TokenVault>>,
-
-    #[account(
-        mut,
         associated_token::mint = token_mint,
-        associated_token::authority = token_vault,
+        associated_token::authority = market,
         associated_token::token_program = token_program,
     )]
-    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -64,40 +60,43 @@ pub fn close_stuck_stake_account(
     let stake_account = &ctx.accounts.stake_account;
 
     // Only closeable if MPC computation is still in flight (or callback failed/never came)
-    require!(stake_account.pending_stake, ErrorCode::StakeNotStuck);
+    require!(
+        stake_account.pending_stake_computation.is_some(),
+        ErrorCode::StakeNotStuck
+    );
 
     let market = &ctx.accounts.market;
     let amount = stake_account.amount;
-    let fee = stake_account.fee;
-    let total_refund = amount.checked_add(fee).ok_or(ErrorCode::Overflow)?;
+    let total_refund = amount
+        .checked_add(stake_account.fees.total()?)
+        .ok_or(ErrorCode::Overflow)?;
 
     if total_refund > 0 {
-        let vault_bump = ctx.accounts.token_vault.bump;
-        let mint_key = ctx.accounts.token_mint.key();
-        let vault_seeds: &[&[&[u8]]] = &[&[
-            TOKEN_VAULT_SEED,
-            mint_key.as_ref(),
-            &[vault_bump],
+        let creator = market.creator;
+        let index_bytes = market.index.to_le_bytes();
+        let market_bump = market.bump;
+        let market_seeds: &[&[&[u8]]] = &[&[
+            OPPORTUNITY_MARKET_SEED,
+            creator.as_ref(),
+            &index_bytes,
+            &[market_bump],
         ]];
 
         transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    from: ctx.accounts.token_vault_ata.to_account_info(),
+                    from: ctx.accounts.market_token_ata.to_account_info(),
                     mint: ctx.accounts.token_mint.to_account_info(),
                     to: ctx.accounts.signer_token_account.to_account_info(),
-                    authority: ctx.accounts.token_vault.to_account_info(),
+                    authority: ctx.accounts.market.to_account_info(),
                 },
-                vault_seeds,
+                market_seeds,
             ),
             total_refund,
             ctx.accounts.token_mint.decimals,
         )?;
     }
-
-    // The failed stake never incremented `token_vault.collected_fees`
-    // (callback never ran), so no counter update is needed.
 
     emit_ts!(StuckStakeClosedEvent {
         owner: ctx.accounts.signer.key(),
@@ -105,7 +104,9 @@ pub fn close_stuck_stake_account(
         stake_account: ctx.accounts.stake_account.key(),
         stake_account_id: stake_account_id,
         refunded_amount: amount,
-        refunded_fee: fee,
+        refunded_platform_fee: stake_account.fees.platform_fee,
+        refunded_reward_pool_fee: stake_account.fees.reward_pool_fee,
+        refunded_creator_fee: stake_account.fees.creator_fee,
     });
 
     Ok(())

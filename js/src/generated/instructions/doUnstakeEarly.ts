@@ -59,8 +59,7 @@ export type DoUnstakeEarlyInstruction<
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountTokenVault extends string | AccountMeta<string> = string,
-  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
   TAccountOwnerTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -83,12 +82,9 @@ export type DoUnstakeEarlyInstruction<
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountTokenVault extends string
-        ? ReadonlyAccount<TAccountTokenVault>
-        : TAccountTokenVault,
-      TAccountTokenVaultAta extends string
-        ? WritableAccount<TAccountTokenVaultAta>
-        : TAccountTokenVaultAta,
+      TAccountMarketTokenAta extends string
+        ? WritableAccount<TAccountMarketTokenAta>
+        : TAccountMarketTokenAta,
       TAccountOwnerTokenAccount extends string
         ? WritableAccount<TAccountOwnerTokenAccount>
         : TAccountOwnerTokenAccount,
@@ -147,8 +143,7 @@ export type DoUnstakeEarlyAsyncInput<
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountOwnerTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -157,9 +152,7 @@ export type DoUnstakeEarlyAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  tokenVault?: Address<TAccountTokenVault>;
-  /** Token vault ATA holding all program-held tokens for this mint. */
-  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive refund */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -173,8 +166,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountOwnerTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -185,8 +177,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountOwnerTokenAccount,
     TAccountTokenProgram,
     TAccountSystemProgram
@@ -199,8 +190,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountOwnerTokenAccount,
     TAccountTokenProgram,
     TAccountSystemProgram
@@ -216,8 +206,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     ownerTokenAccount: {
       value: input.ownerTokenAccount ?? null,
       isWritable: true,
@@ -249,23 +238,12 @@ export async function getDoUnstakeEarlyInstructionAsync<
       ],
     });
   }
-  if (!accounts.tokenVault.value) {
-    accounts.tokenVault.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-      ],
-    });
-  }
-  if (!accounts.tokenVaultAta.value) {
-    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+  if (!accounts.marketTokenAta.value) {
+    accounts.marketTokenAta.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.market.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
@@ -283,8 +261,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.ownerTokenAccount),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
@@ -299,8 +276,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountOwnerTokenAccount,
     TAccountTokenProgram,
     TAccountSystemProgram
@@ -312,8 +288,7 @@ export type DoUnstakeEarlyInput<
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountTokenVault extends string = string,
-  TAccountTokenVaultAta extends string = string,
+  TAccountMarketTokenAta extends string = string,
   TAccountOwnerTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
@@ -322,9 +297,7 @@ export type DoUnstakeEarlyInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  tokenVault: Address<TAccountTokenVault>;
-  /** Token vault ATA holding all program-held tokens for this mint. */
-  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive refund */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -338,8 +311,7 @@ export function getDoUnstakeEarlyInstruction<
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
-  TAccountTokenVault extends string,
-  TAccountTokenVaultAta extends string,
+  TAccountMarketTokenAta extends string,
   TAccountOwnerTokenAccount extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
@@ -350,8 +322,7 @@ export function getDoUnstakeEarlyInstruction<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountOwnerTokenAccount,
     TAccountTokenProgram,
     TAccountSystemProgram
@@ -363,8 +334,7 @@ export function getDoUnstakeEarlyInstruction<
   TAccountMarket,
   TAccountStakeAccount,
   TAccountTokenMint,
-  TAccountTokenVault,
-  TAccountTokenVaultAta,
+  TAccountMarketTokenAta,
   TAccountOwnerTokenAccount,
   TAccountTokenProgram,
   TAccountSystemProgram
@@ -379,8 +349,7 @@ export function getDoUnstakeEarlyInstruction<
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
-    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     ownerTokenAccount: {
       value: input.ownerTokenAccount ?? null,
       isWritable: true,
@@ -409,8 +378,7 @@ export function getDoUnstakeEarlyInstruction<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.tokenVault),
-      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.ownerTokenAccount),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
@@ -425,8 +393,7 @@ export function getDoUnstakeEarlyInstruction<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountTokenVault,
-    TAccountTokenVaultAta,
+    TAccountMarketTokenAta,
     TAccountOwnerTokenAccount,
     TAccountTokenProgram,
     TAccountSystemProgram
@@ -443,13 +410,11 @@ export type ParsedDoUnstakeEarlyInstruction<
     market: TAccountMetas[1];
     stakeAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    tokenVault: TAccountMetas[4];
-    /** Token vault ATA holding all program-held tokens for this mint. */
-    tokenVaultAta: TAccountMetas[5];
+    marketTokenAta: TAccountMetas[4];
     /** Owner's token account to receive refund */
-    ownerTokenAccount: TAccountMetas[6];
-    tokenProgram: TAccountMetas[7];
-    systemProgram: TAccountMetas[8];
+    ownerTokenAccount: TAccountMetas[5];
+    tokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
   };
   data: DoUnstakeEarlyInstructionData;
 };
@@ -462,7 +427,7 @@ export function parseDoUnstakeEarlyInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedDoUnstakeEarlyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -479,8 +444,7 @@ export function parseDoUnstakeEarlyInstruction<
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
       tokenMint: getNextAccount(),
-      tokenVault: getNextAccount(),
-      tokenVaultAta: getNextAccount(),
+      marketTokenAta: getNextAccount(),
       ownerTokenAccount: getNextAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),

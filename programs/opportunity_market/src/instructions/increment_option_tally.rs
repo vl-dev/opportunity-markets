@@ -15,6 +15,7 @@ pub struct IncrementOptionTally<'info> {
     /// CHECK: this is a permissionless operation
     pub owner: UncheckedAccount<'info>,
 
+    #[account(mut)]
     pub market: Account<'info, OpportunityMarket>,
 
     #[account(
@@ -47,14 +48,9 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
     let reveal_start = open_timestamp
         .checked_add(market.time_to_stake)
         .ok_or(ErrorCode::Overflow)?;
-    let reveal_end = reveal_start
-        .checked_add(market.time_to_reveal)
-        .ok_or(ErrorCode::Overflow)?;
 
-    require!(
-        current_time >= reveal_start && current_time <= reveal_end,
-        ErrorCode::MarketNotResolved
-    );
+    require!(current_time >= reveal_start, ErrorCode::TimeWindowMismatch);
+    require!(market.reveal_ended_at.is_none(), ErrorCode::RevealPeriodEnded);
 
     let revealed_option = ctx.accounts.stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
     require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
@@ -73,12 +69,13 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         .unwrap_or(reveal_start);
 
     let user_score = calculate_user_score(
-        open_timestamp,
+        ctx.accounts.option.created_at,
         reveal_start,
         staked_at_timestamp,
         user_stake_end,
         stake_amount,
         market.earliness_cutoff_seconds,
+        market.earliness_multiplier,
     )?;
 
     ctx.accounts.option.total_score = ctx.accounts.option.total_score
@@ -88,6 +85,13 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
     // Store the user's score in their stake account for reward calculation
     ctx.accounts.stake_account.score = Some(user_score);
     ctx.accounts.stake_account.total_incremented = true;
+
+    // Winning option means stake fees get refunded, so deduct from market account.
+    // Actual refund transfer happens in `close_stake_account` together with reward.
+    if ctx.accounts.option.selected {
+        let fees = ctx.accounts.stake_account.fees;
+        ctx.accounts.market.deduct_stake_fees(&fees)?;
+    }
 
     emit_ts!(TallyIncrementedEvent {
         owner: ctx.accounts.owner.key(),
