@@ -1,11 +1,11 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getIncrementOptionTallyInstructionAsync,
-  type IncrementOptionTallyInstruction,
+  getFinalizeRevealStakeInstructionAsync,
+  type FinalizeRevealStakeInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface IncrementOptionTallyParams extends BaseInstructionParams {
+export interface FinalizeRevealStakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
@@ -13,11 +13,11 @@ export interface IncrementOptionTallyParams extends BaseInstructionParams {
   stakeAccountId: number;
 }
 
-export async function incrementOptionTally(
-  input: IncrementOptionTallyParams
-): Promise<IncrementOptionTallyInstruction<string>> {
+export async function finalizeRevealStake(
+  input: FinalizeRevealStakeParams
+): Promise<FinalizeRevealStakeInstruction<string>> {
   const { programAddress, ...params } = input;
-  return getIncrementOptionTallyInstructionAsync(
+  return getFinalizeRevealStakeInstructionAsync(
     params,
     programAddress ? { programAddress } : undefined
   );

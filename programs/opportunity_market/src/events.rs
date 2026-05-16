@@ -42,7 +42,7 @@ pub struct MarketCreatedEvent {
 pub struct MarketOptionCreatedEvent {
     pub option: Pubkey,
     pub market: Pubkey,
-    pub market_authority: Pubkey,
+    pub signer: Pubkey,
     pub id: u64,
     pub timestamp: i64,
 }
@@ -124,7 +124,7 @@ pub struct RewardClaimedEvent {
 }
 
 #[event]
-pub struct TallyIncrementedEvent {
+pub struct RevealStakeFinalizedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub stake_account: Pubkey,

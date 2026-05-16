@@ -26,7 +26,7 @@ import {
   type ParsedEndRevealPeriodInstruction,
   type ParsedFinalizeNewFeeClaimAuthorityInstruction,
   type ParsedFinalizeNewUpdateAuthorityInstruction,
-  type ParsedIncrementOptionTallyInstruction,
+  type ParsedFinalizeRevealStakeInstruction,
   type ParsedInitAllowedMintInstruction,
   type ParsedInitPlatformConfigInstruction,
   type ParsedInitStakeAccountInstruction,
@@ -232,7 +232,7 @@ export enum OpportunityMarketInstruction {
   EndRevealPeriod,
   FinalizeNewFeeClaimAuthority,
   FinalizeNewUpdateAuthority,
-  IncrementOptionTally,
+  FinalizeRevealStake,
   InitAllowedMint,
   InitPlatformConfig,
   InitStakeAccount,
@@ -394,12 +394,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([93, 109, 206, 212, 231, 51, 71, 122])
+        new Uint8Array([92, 201, 94, 219, 117, 53, 255, 230])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.IncrementOptionTally;
+    return OpportunityMarketInstruction.FinalizeRevealStake;
   }
   if (
     containsBytes(
@@ -655,8 +655,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.FinalizeNewUpdateAuthority;
     } & ParsedFinalizeNewUpdateAuthorityInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.IncrementOptionTally;
-    } & ParsedIncrementOptionTallyInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.FinalizeRevealStake;
+    } & ParsedFinalizeRevealStakeInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.InitAllowedMint;
     } & ParsedInitAllowedMintInstruction<TProgram>)

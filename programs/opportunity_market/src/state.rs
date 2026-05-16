@@ -13,32 +13,21 @@ pub struct PlatformConfig {
 
     pub update_authority: Pubkey,
 
-    // Only this address can call claim_fees on markets tied to this platform
+    // Can claim platform fees
     pub fee_claim_authority: Pubkey,
 
     // Platform fee in basis points
     pub platform_fee_bp: u16,
-
-    // Reward-pool fee in basis points
     pub reward_pool_fee_bp: u16,
-
-    // Creator fee in basis points (claimable by market_fee_claimer once winners are selected)
     pub creator_fee_bp: u16,
 
-    // Grace period after stake_end during which market_authority may set winning options and
-    // resolve the market. Past this, the market is "expired" and stakers may recover
-    // reward_pool_fee + creator_fee.
     pub market_resolution_deadline_seconds: u64,
 
-    // Minimum time_to_stake (seconds) accepted by create_market
     pub min_time_to_stake_seconds: u64,
 
-    // Grace period after staking ends to reveal stakes
-    // Reveal period can be closed only after this has passed.
+    // Reveal period can be closed within this time-window by market authority.
+    // After max time has passed, end_reveal_period becomes permissionless.
     pub min_reveal_period_seconds: u64,
-
-    // Time after resolve at which end_reveal_period becomes permissionless,
-    // so the reveal_period_authority cannot indefinitely block close_stake_account.
     pub max_reveal_period_seconds: u64,
 }
 
@@ -216,7 +205,6 @@ pub struct OpportunityMarketOption {
     pub id: u64,
     pub created_at: u64,
 
-    // Total tallies, collected in `increment_option_tally`
     pub total_staked: u64,
     pub total_score: u64,
 

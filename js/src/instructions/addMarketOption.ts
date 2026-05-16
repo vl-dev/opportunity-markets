@@ -6,7 +6,7 @@ import {
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface AddMarketOptionParams extends BaseInstructionParams {
-  marketAuthority: TransactionSigner;
+  signer: TransactionSigner;
   market: Address;
   optionId: number | bigint;
 }

@@ -158,7 +158,7 @@ describe("OpportunityMarket", () => {
     }
 
     // Increment option tally for winners
-    await platform.incrementOptionTallyBatch(
+    await platform.finalizeRevealStakeBatch(
       winners.map((userId, i) => ({
         userId,
         optionId: winningOptionIndex,
@@ -411,9 +411,9 @@ describe("OpportunityMarket", () => {
     // User 1: A (stake 0), B (stake 1) — C is a loser
     // User 2: E (stake 0) — F, G are losers
     await Promise.all([
-      platform.incrementOptionTally(user1, optA, u1StakeIds[0]),
-      platform.incrementOptionTally(user1, optB, u1StakeIds[1]),
-      platform.incrementOptionTally(user2, optE, u2StakeIds[0]),
+      platform.finalizeRevealStake(user1, optA, u1StakeIds[0]),
+      platform.finalizeRevealStake(user1, optB, u1StakeIds[1]),
+      platform.finalizeRevealStake(user2, optE, u2StakeIds[0]),
     ]);
 
     // Reclaim staked tokens for all accounts
@@ -570,7 +570,7 @@ describe("OpportunityMarket", () => {
 
     // Increment tally for winning option stake accounts
     const winningStakeAccounts = platform.getUserStakeAccountsForOption(user, winningOptionId);
-    await platform.incrementOptionTallyBatch(
+    await platform.finalizeRevealStakeBatch(
       winningStakeAccounts.map((sa) => ({
         userId: user,
         optionId: winningOptionId,
@@ -1207,7 +1207,7 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     await platform.revealStake(user, stakeAccountId);
-    await platform.incrementOptionTally(user, optionId, stakeAccountId);
+    await platform.finalizeRevealStake(user, optionId, stakeAccountId);
     await platform.unstake(user, stakeAccountId);
     await platform.endRevealPeriod();
 

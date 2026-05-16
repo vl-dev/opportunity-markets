@@ -21,12 +21,9 @@
       ],
       "accounts": [
         {
-          "name": "market_authority",
+          "name": "signer",
           "writable": true,
-          "signer": true,
-          "relations": [
-            "market"
-          ]
+          "signer": true
         },
         {
           "name": "market",
@@ -1444,16 +1441,16 @@
       "args": []
     },
     {
-      "name": "increment_option_tally",
+      "name": "finalize_reveal_stake",
       "discriminator": [
-        93,
-        109,
-        206,
-        212,
-        231,
-        51,
-        71,
-        122
+        92,
+        201,
+        94,
+        219,
+        117,
+        53,
+        255,
+        230
       ],
       "accounts": [
         {
@@ -3473,6 +3470,19 @@
       ]
     },
     {
+      "name": "RevealStakeFinalizedEvent",
+      "discriminator": [
+        69,
+        61,
+        231,
+        137,
+        194,
+        99,
+        121,
+        108
+      ]
+    },
+    {
       "name": "RewardAddedEvent",
       "discriminator": [
         37,
@@ -3587,19 +3597,6 @@
         54,
         149,
         152
-      ]
-    },
-    {
-      "name": "TallyIncrementedEvent",
-      "discriminator": [
-        201,
-        116,
-        160,
-        31,
-        237,
-        32,
-        124,
-        230
       ]
     },
     {
@@ -4584,7 +4581,7 @@
             "type": "pubkey"
           },
           {
-            "name": "market_authority",
+            "name": "signer",
             "type": "pubkey"
           },
           {
@@ -5113,6 +5110,54 @@
           {
             "name": "signer",
             "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RevealStakeFinalizedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_account_id",
+            "type": "u32"
+          },
+          {
+            "name": "option_id",
+            "type": "u64"
+          },
+          {
+            "name": "user_stake",
+            "type": "u64"
+          },
+          {
+            "name": "user_score",
+            "type": "u64"
+          },
+          {
+            "name": "total_score",
+            "type": "u64"
+          },
+          {
+            "name": "total_stake",
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -5732,54 +5777,6 @@
           },
           {
             "name": "refunded_creator_fee",
-            "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TallyIncrementedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account_id",
-            "type": "u32"
-          },
-          {
-            "name": "option_id",
-            "type": "u64"
-          },
-          {
-            "name": "user_stake",
-            "type": "u64"
-          },
-          {
-            "name": "user_score",
-            "type": "u64"
-          },
-          {
-            "name": "total_score",
-            "type": "u64"
-          },
-          {
-            "name": "total_stake",
             "type": "u64"
           },
           {

@@ -44,17 +44,17 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const INCREMENT_OPTION_TALLY_DISCRIMINATOR = new Uint8Array([
-  93, 109, 206, 212, 231, 51, 71, 122,
+export const FINALIZE_REVEAL_STAKE_DISCRIMINATOR = new Uint8Array([
+  92, 201, 94, 219, 117, 53, 255, 230,
 ]);
 
-export function getIncrementOptionTallyDiscriminatorBytes() {
+export function getFinalizeRevealStakeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    INCREMENT_OPTION_TALLY_DISCRIMINATOR
+    FINALIZE_REVEAL_STAKE_DISCRIMINATOR
   );
 }
 
-export type IncrementOptionTallyInstruction<
+export type FinalizeRevealStakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
@@ -91,18 +91,18 @@ export type IncrementOptionTallyInstruction<
     ]
   >;
 
-export type IncrementOptionTallyInstructionData = {
+export type FinalizeRevealStakeInstructionData = {
   discriminator: ReadonlyUint8Array;
   optionId: bigint;
   stakeAccountId: number;
 };
 
-export type IncrementOptionTallyInstructionDataArgs = {
+export type FinalizeRevealStakeInstructionDataArgs = {
   optionId: number | bigint;
   stakeAccountId: number;
 };
 
-export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncoder<IncrementOptionTallyInstructionDataArgs> {
+export function getFinalizeRevealStakeInstructionDataEncoder(): FixedSizeEncoder<FinalizeRevealStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -111,12 +111,12 @@ export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncode
     ]),
     (value) => ({
       ...value,
-      discriminator: INCREMENT_OPTION_TALLY_DISCRIMINATOR,
+      discriminator: FINALIZE_REVEAL_STAKE_DISCRIMINATOR,
     })
   );
 }
 
-export function getIncrementOptionTallyInstructionDataDecoder(): FixedSizeDecoder<IncrementOptionTallyInstructionData> {
+export function getFinalizeRevealStakeInstructionDataDecoder(): FixedSizeDecoder<FinalizeRevealStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['optionId', getU64Decoder()],
@@ -124,17 +124,17 @@ export function getIncrementOptionTallyInstructionDataDecoder(): FixedSizeDecode
   ]);
 }
 
-export function getIncrementOptionTallyInstructionDataCodec(): FixedSizeCodec<
-  IncrementOptionTallyInstructionDataArgs,
-  IncrementOptionTallyInstructionData
+export function getFinalizeRevealStakeInstructionDataCodec(): FixedSizeCodec<
+  FinalizeRevealStakeInstructionDataArgs,
+  FinalizeRevealStakeInstructionData
 > {
   return combineCodec(
-    getIncrementOptionTallyInstructionDataEncoder(),
-    getIncrementOptionTallyInstructionDataDecoder()
+    getFinalizeRevealStakeInstructionDataEncoder(),
+    getFinalizeRevealStakeInstructionDataDecoder()
   );
 }
 
-export type IncrementOptionTallyAsyncInput<
+export type FinalizeRevealStakeAsyncInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
@@ -148,11 +148,11 @@ export type IncrementOptionTallyAsyncInput<
   stakeAccount?: Address<TAccountStakeAccount>;
   option?: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
-  stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
+  optionId: FinalizeRevealStakeInstructionDataArgs['optionId'];
+  stakeAccountId: FinalizeRevealStakeInstructionDataArgs['stakeAccountId'];
 };
 
-export async function getIncrementOptionTallyInstructionAsync<
+export async function getFinalizeRevealStakeInstructionAsync<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
@@ -161,7 +161,7 @@ export async function getIncrementOptionTallyInstructionAsync<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: IncrementOptionTallyAsyncInput<
+  input: FinalizeRevealStakeAsyncInput<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
@@ -171,7 +171,7 @@ export async function getIncrementOptionTallyInstructionAsync<
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  IncrementOptionTallyInstruction<
+  FinalizeRevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -245,11 +245,11 @@ export async function getIncrementOptionTallyInstructionAsync<
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getIncrementOptionTallyInstructionDataEncoder().encode(
-      args as IncrementOptionTallyInstructionDataArgs
+    data: getFinalizeRevealStakeInstructionDataEncoder().encode(
+      args as FinalizeRevealStakeInstructionDataArgs
     ),
     programAddress,
-  } as IncrementOptionTallyInstruction<
+  } as FinalizeRevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -260,7 +260,7 @@ export async function getIncrementOptionTallyInstructionAsync<
   >);
 }
 
-export type IncrementOptionTallyInput<
+export type FinalizeRevealStakeInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
@@ -274,11 +274,11 @@ export type IncrementOptionTallyInput<
   stakeAccount: Address<TAccountStakeAccount>;
   option: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
-  stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
+  optionId: FinalizeRevealStakeInstructionDataArgs['optionId'];
+  stakeAccountId: FinalizeRevealStakeInstructionDataArgs['stakeAccountId'];
 };
 
-export function getIncrementOptionTallyInstruction<
+export function getFinalizeRevealStakeInstruction<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
@@ -287,7 +287,7 @@ export function getIncrementOptionTallyInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: IncrementOptionTallyInput<
+  input: FinalizeRevealStakeInput<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
@@ -296,7 +296,7 @@ export function getIncrementOptionTallyInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): IncrementOptionTallyInstruction<
+): FinalizeRevealStakeInstruction<
   TProgramAddress,
   TAccountSigner,
   TAccountOwner,
@@ -342,11 +342,11 @@ export function getIncrementOptionTallyInstruction<
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getIncrementOptionTallyInstructionDataEncoder().encode(
-      args as IncrementOptionTallyInstructionDataArgs
+    data: getFinalizeRevealStakeInstructionDataEncoder().encode(
+      args as FinalizeRevealStakeInstructionDataArgs
     ),
     programAddress,
-  } as IncrementOptionTallyInstruction<
+  } as FinalizeRevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -357,7 +357,7 @@ export function getIncrementOptionTallyInstruction<
   >);
 }
 
-export type ParsedIncrementOptionTallyInstruction<
+export type ParsedFinalizeRevealStakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -370,17 +370,17 @@ export type ParsedIncrementOptionTallyInstruction<
     option: TAccountMetas[4];
     systemProgram: TAccountMetas[5];
   };
-  data: IncrementOptionTallyInstructionData;
+  data: FinalizeRevealStakeInstructionData;
 };
 
-export function parseIncrementOptionTallyInstruction<
+export function parseFinalizeRevealStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedIncrementOptionTallyInstruction<TProgram, TAccountMetas> {
+): ParsedFinalizeRevealStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -401,7 +401,7 @@ export function parseIncrementOptionTallyInstruction<
       option: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getIncrementOptionTallyInstructionDataDecoder().decode(
+    data: getFinalizeRevealStakeInstructionDataDecoder().decode(
       instruction.data
     ),
   };

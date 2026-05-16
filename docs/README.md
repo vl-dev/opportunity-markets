@@ -149,3 +149,7 @@ The market authority must call this instruction within a certain grace period. A
 #### Claiming rewards
 
 After the reveal period has passsed, users that staked on one of the selected options can call `close_stake_account` to claim their slice of the reward pool and reclaim the refundable part of fees they paid. Non-winning stake accounts can also be closed via the same instruction to reclaim account rent.
+
+#### Reward calculation
+
+TODO

@@ -9,18 +9,17 @@ use crate::state::{OpportunityMarket, OpportunityMarketOption};
 #[instruction(option_id: u64)]
 pub struct AddMarketOption<'info> {
     #[account(mut)]
-    pub market_authority: Signer<'info>,
+    pub signer: Signer<'info>,
 
     #[account(
         mut,
         constraint = market.resolved_at_timestamp.is_none() @ ErrorCode::WinnerAlreadySelected,
-        has_one = market_authority @ ErrorCode::Unauthorized,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
     #[account(
         init,
-        payer = market_authority,
+        payer = signer,
         space = 8 + OpportunityMarketOption::INIT_SPACE,
         seeds = [OPTION_SEED, market.key().as_ref(), &option_id.to_le_bytes()],
         bump,
@@ -58,7 +57,7 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
     emit_ts!(MarketOptionCreatedEvent {
         option: option.key(),
         market: market.key(),
-        market_authority: ctx.accounts.market_authority.key(),
+        signer: ctx.accounts.signer.key(),
         id: option.id,
     });
 

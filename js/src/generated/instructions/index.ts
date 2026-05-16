@@ -18,7 +18,7 @@ export * from './createMarket';
 export * from './endRevealPeriod';
 export * from './finalizeNewFeeClaimAuthority';
 export * from './finalizeNewUpdateAuthority';
-export * from './incrementOptionTally';
+export * from './finalizeRevealStake';
 export * from './initAllowedMint';
 export * from './initPlatformConfig';
 export * from './initStakeAccount';

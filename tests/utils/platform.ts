@@ -35,7 +35,7 @@ import {
   setWinningOption as setWinningOptionIx,
   resolveMarket as resolveMarketIx,
   revealStake,
-  incrementOptionTally,
+  finalizeRevealStake,
   closeStakeAccount,
   closeStuckStakeAccount as closeStuckStakeAccountIx,
   unstake as unstakeIx,
@@ -685,7 +685,7 @@ export class Platform {
     this.usedOptionIds.add(optionId);
 
     const addOptionIx = await addMarketOption({
-      marketAuthority: this.marketCreator.solanaKeypair,
+      signer: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
     });
@@ -830,11 +830,11 @@ export class Platform {
     await this.revealStakeBatch([{ userId, stakeAccountId }]);
   }
 
-  async incrementOptionTallyBatch(increments: TallyIncrement[]): Promise<void> {
+  async finalizeRevealStakeBatch(increments: TallyIncrement[]): Promise<void> {
     const instructions = await Promise.all(
       increments.map(async (inc) => {
         const user = this.getUser(inc.userId);
-        const ix = await incrementOptionTally({
+        const ix = await finalizeRevealStake({
           signer: user.solanaKeypair,
           owner: user.solanaKeypair.address,
           market: this.marketAddress,
@@ -847,13 +847,13 @@ export class Platform {
 
     for (const data of instructions) {
       await sendTransaction(this.rpc, this.sendAndConfirm, data.user.solanaKeypair, [data.ix], {
-        label: `Increment tally`,
+        label: `Finalize reveal stake`,
       });
     }
   }
 
-  async incrementOptionTally(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
-    await this.incrementOptionTallyBatch([{ userId, optionId, stakeAccountId }]);
+  async finalizeRevealStake(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
+    await this.finalizeRevealStakeBatch([{ userId, optionId, stakeAccountId }]);
   }
 
   async closeStakeAccountBatch(closes: CloseRequest[]): Promise<void> {

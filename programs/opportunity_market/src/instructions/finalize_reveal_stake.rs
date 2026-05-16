@@ -2,13 +2,13 @@ use anchor_lang::prelude::*;
 
 use crate::score::calculate_user_score;
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, TallyIncrementedEvent};
+use crate::events::{emit_ts, RevealStakeFinalizedEvent};
 use crate::constants::{OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
 #[instruction(option_id: u64, stake_account_id: u32)]
-pub struct IncrementOptionTally<'info> {
+pub struct FinalizeRevealStake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -37,7 +37,7 @@ pub struct IncrementOptionTally<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64, _stake_account_id: u32) -> Result<()> {
+pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, _stake_account_id: u32) -> Result<()> {
     let market = &ctx.accounts.market;
 
     // Check that we are within the reveal window
@@ -93,7 +93,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         ctx.accounts.market.deduct_stake_fees(&fees)?;
     }
 
-    emit_ts!(TallyIncrementedEvent {
+    emit_ts!(RevealStakeFinalizedEvent {
         owner: ctx.accounts.owner.key(),
         market: ctx.accounts.market.key(),
         stake_account: ctx.accounts.stake_account.key(),

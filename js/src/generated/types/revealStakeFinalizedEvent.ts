@@ -24,7 +24,7 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type TallyIncrementedEvent = {
+export type RevealStakeFinalizedEvent = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
@@ -37,7 +37,7 @@ export type TallyIncrementedEvent = {
   timestamp: bigint;
 };
 
-export type TallyIncrementedEventArgs = {
+export type RevealStakeFinalizedEventArgs = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
@@ -50,7 +50,7 @@ export type TallyIncrementedEventArgs = {
   timestamp: number | bigint;
 };
 
-export function getTallyIncrementedEventEncoder(): FixedSizeEncoder<TallyIncrementedEventArgs> {
+export function getRevealStakeFinalizedEventEncoder(): FixedSizeEncoder<RevealStakeFinalizedEventArgs> {
   return getStructEncoder([
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
@@ -65,7 +65,7 @@ export function getTallyIncrementedEventEncoder(): FixedSizeEncoder<TallyIncreme
   ]);
 }
 
-export function getTallyIncrementedEventDecoder(): FixedSizeDecoder<TallyIncrementedEvent> {
+export function getRevealStakeFinalizedEventDecoder(): FixedSizeDecoder<RevealStakeFinalizedEvent> {
   return getStructDecoder([
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
@@ -80,12 +80,12 @@ export function getTallyIncrementedEventDecoder(): FixedSizeDecoder<TallyIncreme
   ]);
 }
 
-export function getTallyIncrementedEventCodec(): FixedSizeCodec<
-  TallyIncrementedEventArgs,
-  TallyIncrementedEvent
+export function getRevealStakeFinalizedEventCodec(): FixedSizeCodec<
+  RevealStakeFinalizedEventArgs,
+  RevealStakeFinalizedEvent
 > {
   return combineCodec(
-    getTallyIncrementedEventEncoder(),
-    getTallyIncrementedEventDecoder()
+    getRevealStakeFinalizedEventEncoder(),
+    getRevealStakeFinalizedEventDecoder()
   );
 }

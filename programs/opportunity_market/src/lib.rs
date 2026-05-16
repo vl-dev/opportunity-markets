@@ -185,8 +185,8 @@ pub mod opportunity_market {
         instructions::add_reward(ctx, amount, lock)
     }
 
-    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64, stake_account_id: u32) -> Result<()> {
-        instructions::increment_option_tally(ctx, option_id, stake_account_id)
+    pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, stake_account_id: u32) -> Result<()> {
+        instructions::finalize_reveal_stake(ctx, option_id, stake_account_id)
     }
 
     pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, stake_account_id: u32) -> Result<()> {
