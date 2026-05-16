@@ -7,8 +7,7 @@ An Opportunity Market goes through the following stages:
 
 1. A decision maker creates an Opportunity Market and funds the reward pool (reward can also be deposited by a 3rd party)
     - For example, a VC firm can create an Opportunity Market titled *"Which companies should we invest in next quarter?"*
-2. The market can have an arbitrary number of options to choose from
-    - For example, *"Acme Inc"*
+2. Participants add new options into the market
 3. Participants stake on their preferred options
 4. The decision maker selects the winning option(s)
 5. All participants withdraw their stake; those who backed the winning options split the reward
@@ -26,7 +25,7 @@ Basically, you can think of the Opportunity Markets protocol as something simila
 1. **Opportunity Markets serve an advisory function in decision making**
 
 The options with majority stake do not automatically win.
-The market creator has the right to choose the winning options according to whichever they believe are the most valuable.
+The market creator chooses the winning options subjectively; whichever they believe are the most valuable.
 There can be multiple winning options, each assigned a differently sized slice of the total reward pool.
 
 2. **Opportunity Markets provide the market creator with capital backed signals of new opportunities**
@@ -71,24 +70,25 @@ In the case that the market creator fails to choose winning options for the mark
 
 #### Staking
 
-The market creator can open the market to staking by calling `open_market`.
+The market creator can open the market and begin the *staking period* by calling `open_market`.
+How long staking is possible is dictated by the market account field `time_to_stake`.
 
-After the market is opened, users can stake in it. How long staking is possible is dictated by the market account field `time_to_stake`.
-
-A user stakes in a market by calling the `stake` instruction. It accepts the following payload:
+A user stakes in a market by first initializing with `init_stake_account` and then calling the `stake` instruction. It accepts the following payload:
 
 - `amount` - stake amount in base units of the market's token
 - `selected_option_ciphertext` - encrypted ID of the option the user chose to stake for
 - `input_nonce` - random nonce used in the encryption of `selected_option_ciphertext`
-- `authorized_reader_nonce` - random nonce used by following encrypted circuit invocation for selective disclosure of the option choice
-- `user_pubkey` - user's x25519 pubkey used by following encrypted circuit invocation
-- `state_nonce` - random nonce used by following encrypted circuit invocation
+- `authorized_reader_nonce` - random nonce used by Arcium encrypted computation invocation for selective disclosure of the option choice
+- `user_pubkey` - user's x25519 pubkey used by Arcium encrypted computation invocation
+- `state_nonce` - random nonce used by Arcium encrypted computation invocation
 
 The `stake` instruction triggers an Arcium encrypted computation.
 This computation takes the user's encrypted option choice and re-encrypts it so that the owner of the market's `authorized_reader_pubkey` can also decrypt and view it. This gives the market creator real-time access to the stake data.
 
 The stake is finalized when the callback instruction (invoked by the Arcium network) runs.
 It is possible that the callback fails to run. In this case, the user can recover their stuck stake with the `close_stuck_stake_account`.
+
+A user can have multiple stake accounts for the same option, but they cannot add stake to an existing one. So if a user wishes to stake more on a certain option, they can just create a new stake account and stake in it again.
 
 #### Staking fee structure
 
@@ -99,15 +99,46 @@ The `stake` instruction also collects fees, split into 3 configurable components
 2. Creator fee
     - Goes to the market creator
 3. Reward pool fee
-    - Goes to the reward pool
+    - Goes to the reward pool, allows reward pool to grow with market volume
 
 Creator fee and reward pool fee are refunded to the winners later together with their reward.
 The reason being that, with a large amount of stake on the winning option, it is possible the reward would get dilluted to the point where a winning stake's reward no longer covers the fees, and a winning staker ends up with a net-loss.
 
 The reward pool fee can be set to a very high value. For example following configuration is possible:
 
-Platform fee = 1%, creator fee 1%, reward pool fee 98%
+Platform fee 1%, creator fee 1%, reward pool fee 98%
 
 This setup effectively turns the opportunity market into a speculative market à la prediction markets, with significant downside for the losers and great upside for the winners. If this kind of setup were to be used, early unstaking should be disabled in the market as the user of course has nothing to unstake since their stake goes to the reward pool.
 
-#### Closing the market
+#### Unstaking
+
+If the market configuration allows, users can reclaim their stake back at any time with the `unstake` instruction. Longer stake however results in a higher score and more potential yield.
+Othewise, the user must wait until the staking period ends before unstaking.
+
+#### Resolving the market
+
+Once the staking period ends, the market creator has a certain amount of time to select the winning options
+They do this via the instruction `set_winning_option`. This can be called multiple times for different options to select multiple winners.
+The instruction takes the option ID and the percentage of the reward pool that should be allocated to that option as arguments and marks the option account as one of the winning ones.
+The market creator finalizes their choices and resolves the market by calling `resolve_market`.
+
+If the market is not resolved in time, the market is considered expired and users can reclaim the fees they paid via `close_stake_account`.
+Sponsors also get to reclaim their deposited rewards via `withdraw_reward`.
+The grace period for a market creator to resolve the market is defined in the platform config.
+
+At this point, users can also claim their stake back without negatively impacting their potential reward amount.
+This is done via `reclaim_stake`.
+
+#### Revealing stakes
+
+Once the staking period is over, user stake choices can be revealed. This can be done in parallel while the creator is resolving the market.
+
+The reveal operation is permissionless and requires two transactions per stake account.
+
+**`reveal_stake`** - This invokes an Arcium encrypted computation that decrypts the user's option choice and returns it as plaintext to the callback.
+The callback then records the plaintext option ID to the stake account struct stored on chain.
+
+// TODO: make sure latter can only be called after resolved! and former already before!
+// And make sure reveal period is always longer than market resolution period by a given minimum!
+
+**`finalize_reveal_stake`** - Now that the option ID is public, this instruction can be called to calculate the user's score and add that to the total score tally for the option for later reward distribution calculation. Here, we also deduct the refundable fee components from the fees that would later be claimable if the user's o

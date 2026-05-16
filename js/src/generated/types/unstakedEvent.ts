@@ -16,6 +16,8 @@ import {
   getStructEncoder,
   getU32Decoder,
   getU32Encoder,
+  getU64Decoder,
+  getU64Encoder,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
@@ -23,37 +25,41 @@ import {
 } from '@solana/kit';
 
 export type UnstakedEvent = {
-  user: Address;
+  owner: Address;
   market: Address;
   stakeAccount: Address;
   stakeAccountId: number;
+  amount: bigint;
   timestamp: bigint;
 };
 
 export type UnstakedEventArgs = {
-  user: Address;
+  owner: Address;
   market: Address;
   stakeAccount: Address;
   stakeAccountId: number;
+  amount: number | bigint;
   timestamp: number | bigint;
 };
 
 export function getUnstakedEventEncoder(): FixedSizeEncoder<UnstakedEventArgs> {
   return getStructEncoder([
-    ['user', getAddressEncoder()],
+    ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['stakeAccount', getAddressEncoder()],
     ['stakeAccountId', getU32Encoder()],
+    ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
 export function getUnstakedEventDecoder(): FixedSizeDecoder<UnstakedEvent> {
   return getStructDecoder([
-    ['user', getAddressDecoder()],
+    ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['stakeAccount', getAddressDecoder()],
     ['stakeAccountId', getU32Decoder()],
+    ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

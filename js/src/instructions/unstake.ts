@@ -1,21 +1,26 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getUnstakeEarlyInstructionAsync,
-  type UnstakeEarlyInstruction,
+  getUnstakeInstructionAsync,
+  type UnstakeInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface UnstakeEarlyParams extends BaseInstructionParams {
+export interface UnstakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
+  owner: Address;
   market: Address;
+  tokenMint: Address;
+  ownerTokenAccount: Address;
+  tokenProgram: Address;
   stakeAccountId: number;
 }
 
-export async function unstakeEarly(
-  input: UnstakeEarlyParams
-): Promise<UnstakeEarlyInstruction<string>> {
+export async function unstake(
+  input: UnstakeParams,
+): Promise<UnstakeInstruction<string>> {
   const { programAddress, ...params } = input;
-  return getUnstakeEarlyInstructionAsync(
+
+  return getUnstakeInstructionAsync(
     params,
     programAddress ? { programAddress } : undefined
   );

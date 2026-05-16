@@ -52,10 +52,6 @@ pub enum ErrorCode {
     Locked,
     #[msg("Invalid account state")]
     InvalidAccountState,
-    #[msg("Unstake delay period has not passed yet")]
-    UnstakeDelayNotMet,
-    #[msg("Unstake has not been initiated")]
-    UnstakeNotInitiated,
     #[msg("Market cannot be closed before stake period ends")]
     ClosingEarlyNotAllowed,
     #[msg("No fees to claim")]

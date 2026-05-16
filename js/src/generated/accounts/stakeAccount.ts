@@ -84,9 +84,8 @@ export type StakeAccount = {
   revealedOption: Option<bigint>;
   score: Option<bigint>;
   totalIncremented: boolean;
-  unstakeableAtTimestamp: Option<bigint>;
   locked: boolean;
-  stakeReclaimed: boolean;
+  unstaked: boolean;
   id: number;
   pendingStakeComputation: Option<Address>;
   pendingReveal: boolean;
@@ -108,9 +107,8 @@ export type StakeAccountArgs = {
   revealedOption: OptionOrNullable<number | bigint>;
   score: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
-  unstakeableAtTimestamp: OptionOrNullable<number | bigint>;
   locked: boolean;
-  stakeReclaimed: boolean;
+  unstaked: boolean;
   id: number;
   pendingStakeComputation: OptionOrNullable<Address>;
   pendingReveal: boolean;
@@ -138,9 +136,8 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
       ['revealedOption', getOptionEncoder(getU64Encoder())],
       ['score', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
-      ['unstakeableAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['locked', getBooleanEncoder()],
-      ['stakeReclaimed', getBooleanEncoder()],
+      ['unstaked', getBooleanEncoder()],
       ['id', getU32Encoder()],
       ['pendingStakeComputation', getOptionEncoder(getAddressEncoder())],
       ['pendingReveal', getBooleanEncoder()],
@@ -170,9 +167,8 @@ export function getStakeAccountDecoder(): Decoder<StakeAccount> {
     ['revealedOption', getOptionDecoder(getU64Decoder())],
     ['score', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],
-    ['unstakeableAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['locked', getBooleanDecoder()],
-    ['stakeReclaimed', getBooleanDecoder()],
+    ['unstaked', getBooleanDecoder()],
     ['id', getU32Decoder()],
     ['pendingStakeComputation', getOptionDecoder(getAddressDecoder())],
     ['pendingReveal', getBooleanDecoder()],

@@ -96,7 +96,7 @@ async function main() {
     marketIndex,
     timeToStake: BigInt(config.timeToStake),
     marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
-    unstakeDelaySeconds: BigInt(config.unstakeDelaySeconds),
+    allowUnstakingEarly: config.allowUnstakingEarly,
     authorizedReaderPubkey,
     allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,

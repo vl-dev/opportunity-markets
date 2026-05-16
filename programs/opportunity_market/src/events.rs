@@ -25,7 +25,7 @@ pub struct MarketCreatedEvent {
     pub earliness_multiplier: u16,
     pub market_authority: Pubkey,
     pub authorized_reader_pubkey: [u8; 32],
-    pub unstake_delay_seconds: u64,
+    pub allow_unstaking_early: bool,
     pub allow_closing_early: bool,
     pub min_stake_amount: u64,
     pub platform_fee_bp: u16,
@@ -73,10 +73,11 @@ pub struct StakeRevealedEvent {
 
 #[event]
 pub struct UnstakedEvent {
-    pub user: Pubkey,
+    pub owner: Pubkey,
     pub market: Pubkey,
     pub stake_account: Pubkey,
     pub stake_account_id: u32,
+    pub amount: u64,
     pub timestamp: i64,
 }
 
@@ -122,16 +123,6 @@ pub struct RewardClaimedEvent {
 }
 
 #[event]
-pub struct StakeReclaimedEvent {
-    pub owner: Pubkey,
-    pub market: Pubkey,
-    pub stake_account: Pubkey,
-    pub stake_account_id: u32,
-    pub amount: u64,
-    pub timestamp: i64,
-}
-
-#[event]
 pub struct TallyIncrementedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
@@ -170,16 +161,6 @@ pub struct RewardWithdrawnEvent {
 pub struct RevealPeriodEndedEvent {
     pub market: Pubkey,
     pub authority: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct UnstakeInitiatedEvent {
-    pub user: Pubkey,
-    pub market: Pubkey,
-    pub stake_account: Pubkey,
-    pub stake_account_id: u32,
-    pub unstakeable_at_timestamp: u64,
     pub timestamp: i64,
 }
 

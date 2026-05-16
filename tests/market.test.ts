@@ -6,7 +6,7 @@ import { expect } from "chai";
 import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
-  OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
+  OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
@@ -175,7 +175,7 @@ describe("OpportunityMarket", () => {
     expect(optionAccount.data.totalStaked).to.equal(totalWinningStaked);
 
     // Reclaim staked tokens for winners
-    await platform.reclaimStakeBatch(
+    await platform.unstakeBatch(
       winners.map((userId, i) => ({
         userId,
         stakeAccountId: winnerStakeAccounts[i].id,
@@ -417,7 +417,7 @@ describe("OpportunityMarket", () => {
     ]);
 
     // Reclaim staked tokens for all accounts
-    await platform.reclaimStakeBatch([
+    await platform.unstakeBatch([
       ...u1StakeIds.map(sid => ({ userId: user1, stakeAccountId: sid })),
       ...u2StakeIds.map(sid => ({ userId: user2, stakeAccountId: sid })),
     ]);
@@ -579,7 +579,7 @@ describe("OpportunityMarket", () => {
     );
 
     // Reclaim staked tokens for all accounts
-    await platform.reclaimStakeBatch(
+    await platform.unstakeBatch(
       userStakeAccounts.map((sa) => ({ userId: user, stakeAccountId: sa.id }))
     );
 
@@ -876,9 +876,8 @@ describe("OpportunityMarket", () => {
     );
   });
 
-  it("allows early unstaking with delay", async () => {
+  it("allows early unstaking when market opts in", async () => {
     const marketFundingAmount = 1_000_000_000n;
-    const unstakeDelaySeconds = 10n;
     const timeToStake = 30n;
     const stakeAmount = 50_000_000n;
 
@@ -887,27 +886,24 @@ describe("OpportunityMarket", () => {
     const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
-      numParticipants: 2,
+      numParticipants: 1,
       airdropLamports: 2_000_000_000n,
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake,
-        unstakeDelaySeconds,
+        allowUnstakingEarly: true,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
 
-    // Open market
     const openTimestamp = await platform.openMarket();
 
-    const [staker, executor] = platform.participants;
+    const [staker] = platform.participants;
 
-    // Add options
     const { optionId: optionA } = await platform.addOption();
     await platform.addOption();
 
-    // Wait for staking period and stake
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     const rpc = platform.getRpc();
@@ -915,58 +911,74 @@ describe("OpportunityMarket", () => {
 
     const stakeAccountId = await platform.stakeOnOption(staker, stakeAmount, optionA);
 
-    // Verify token balance decreased after staking
     const balanceAfterStake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
     expect(balanceBeforeStake - balanceAfterStake).to.equal(stakeAmount);
 
-    // Verify initial state
     let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(isNone(stakeAccount.data.unstakeableAtTimestamp)).to.be.true;
+    expect(stakeAccount.data.unstaked).to.be.false;
     expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
-    // Initiate early unstake (sets unstakeableAtTimestamp)
-    await platform.unstakeEarly(staker, stakeAccountId);
+    // Single-step unstake during the staking window (allowed because market opted in).
+    await platform.unstake(staker, stakeAccountId);
 
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(isSome(stakeAccount.data.unstakeableAtTimestamp)).to.be.true;
-    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
-
-    // Execute unstake too early — should fail
-    await shouldThrowCustomError(
-      () => platform.doUnstakeEarly(executor, staker, stakeAccountId),
-      OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET
-    );
-
-    // Wait for unstake delay to pass
-    const unstakeableAt = unwrapOption(stakeAccount.data.unstakeableAtTimestamp);
-    if (!unstakeableAt) throw new Error("unstakeableAtTimestamp is None");
-    await sleepUntilOnChainTimestamp(
-      Number(unstakeableAt) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
-      rpc,
-    );
-
-    // Execute unstake (permissionless — different user can call)
-    const balanceBeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
-    await platform.doUnstakeEarly(executor, staker, stakeAccountId);
-
-    stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
+    expect(stakeAccount.data.unstaked).to.be.true;
+    // Early unstake records the shortened staking window for scoring.
     expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
-    // Verify staker received tokens back (net of 1% protocol fee)
+    // Net stake refunded (1% platform fee forfeited).
     const balanceAfterUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
     const protocolFeeBp = 100n;
     const expectedNet = stakeAmount - (stakeAmount * protocolFeeBp / 10_000n);
-    expect(balanceAfterUnstake - balanceBeforeUnstake).to.equal(expectedNet);
+    expect(balanceAfterUnstake - balanceBeforeStake + stakeAmount).to.equal(expectedNet);
 
-    // Select winner and wait for stake period to end
+    // Double unstake should fail.
+    await shouldThrowCustomError(
+      () => platform.unstake(staker, stakeAccountId),
+      OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED,
+    );
+
+    // Reveal still works post-stake-end (early unstaker keeps participation rights).
     await platform.selectSingleWinningOption(optionA);
     const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
     await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    // Reveal stake
     await platform.revealStake(staker, stakeAccountId);
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
     expect(stakeAccount.data.revealedOption).to.deep.equal(some(BigInt(optionA)));
+  });
+
+  it("blocks early unstaking when market does not opt in", async () => {
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake: 60n,
+        allowUnstakingEarly: false,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    const [staker] = platform.participants;
+    const { optionId: optionA } = await platform.addOption();
+    await platform.addOption();
+
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const stakeAccountId = await platform.stakeOnOption(staker, 50_000_000n, optionA);
+
+    // Window is still open and opt-in is false — must reject.
+    await shouldThrowCustomError(
+      () => platform.unstake(staker, stakeAccountId),
+      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
+    );
   });
 
   it("locked sponsor cannot withdraw but unlocked sponsor can", async () => {
@@ -1196,7 +1208,7 @@ describe("OpportunityMarket", () => {
 
     await platform.revealStake(user, stakeAccountId);
     await platform.incrementOptionTally(user, optionId, stakeAccountId);
-    await platform.reclaimStake(user, stakeAccountId);
+    await platform.unstake(user, stakeAccountId);
     await platform.endRevealPeriod();
 
     // Platform fee → fee_claim_authority (= creator in default Platform setup).
@@ -1277,7 +1289,7 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(selectDeadline + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
 
     // Stake reclaim returns the net staked amount.
-    await platform.reclaimStake(user, stakeAccountId);
+    await platform.unstake(user, stakeAccountId);
 
     // Closing on the expired path refunds reward_pool_fee + creator_fee.
     await platform.closeStakeAccount(user, optionId, stakeAccountId);

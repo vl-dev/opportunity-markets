@@ -13,9 +13,6 @@ pub const MAX_TOTAL_FEE_BP: u16 = 10_000;
 /// Fixed timelock delay: 48 hours
 pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
 
-/// Maximum unstake delay: 3 days
-pub const MAX_UNSTAKE_DELAY_SECONDS: u64 = 3 * 24 * 60 * 60;
-
 #[cfg(feature = "production-settings")]
 pub const MIN_MARKET_RESOLUTION_DEADLINE_SECONDS: u64 = 7 * 24 * 60 * 60;
 

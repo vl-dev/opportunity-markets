@@ -116,7 +116,7 @@ pub mod opportunity_market {
         market_index: u64,
         time_to_stake: u64,
         market_authority: Pubkey,
-        unstake_delay_seconds: u64,
+        allow_unstaking_early: bool,
         authorized_reader_pubkey: [u8; 32],
         allow_closing_early: bool,
         reveal_period_authority: Pubkey,
@@ -130,7 +130,7 @@ pub mod opportunity_market {
             market_index,
             time_to_stake,
             market_authority,
-            unstake_delay_seconds,
+            allow_unstaking_early,
             authorized_reader_pubkey,
             allow_closing_early,
             reveal_period_authority,
@@ -193,8 +193,8 @@ pub mod opportunity_market {
         instructions::close_stuck_stake_account(ctx, stake_account_id)
     }
 
-    pub fn reclaim_stake(ctx: Context<ReclaimStake>, stake_account_id: u32) -> Result<()> {
-        instructions::reclaim_stake(ctx, stake_account_id)
+    pub fn unstake(ctx: Context<Unstake>, stake_account_id: u32) -> Result<()> {
+        instructions::unstake(ctx, stake_account_id)
     }
 
     pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
@@ -264,18 +264,4 @@ pub mod opportunity_market {
         instructions::reveal_stake_callback(ctx, output)
     }
 
-    pub fn unstake_early(
-        ctx: Context<UnstakeEarly>,
-        stake_account_id: u32,
-    ) -> Result<()> {
-        instructions::unstake_early(ctx, stake_account_id)
-    }
-
-    pub fn do_unstake_early(
-        ctx: Context<DoUnstakeEarly>,
-        stake_account_id: u32,
-        stake_account_owner: Pubkey,
-    ) -> Result<()> {
-        instructions::do_unstake_early(ctx, stake_account_id, stake_account_owner)
-    }
 }

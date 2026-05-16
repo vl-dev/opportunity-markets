@@ -4,13 +4,13 @@ use anchor_spl::token_interface::{
 };
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, StakeReclaimedEvent};
+use crate::events::{emit_ts, UnstakedEvent};
 use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
 use crate::state::{OpportunityMarket, StakeAccount};
 
 #[derive(Accounts)]
 #[instruction(stake_account_id: u32)]
-pub struct ReclaimStake<'info> {
+pub struct Unstake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -28,9 +28,8 @@ pub struct ReclaimStake<'info> {
         mut,
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
-        constraint = !stake_account.stake_reclaimed @ ErrorCode::AlreadyUnstaked,
+        constraint = !stake_account.unstaked @ ErrorCode::AlreadyUnstaked,
         constraint = stake_account.staked_at_timestamp.is_some() @ ErrorCode::NoStake,
-        constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
@@ -59,8 +58,8 @@ pub struct ReclaimStake<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn reclaim_stake(
-    ctx: Context<ReclaimStake>,
+pub fn unstake(
+    ctx: Context<Unstake>,
     _stake_account_id: u32,
 ) -> Result<()> {
     let market = &ctx.accounts.market;
@@ -71,7 +70,10 @@ pub fn reclaim_stake(
         .ok_or(ErrorCode::Overflow)?;
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
 
-    require!(current_timestamp >= stake_end, ErrorCode::TimeWindowMismatch);
+    if current_timestamp < stake_end {
+        require!(market.allow_unstaking_early, ErrorCode::TimeWindowMismatch);
+        ctx.accounts.stake_account.unstaked_at_timestamp = Some(current_timestamp);
+    }
 
     let amount = ctx.accounts.stake_account.amount;
 
@@ -102,9 +104,9 @@ pub fn reclaim_stake(
         )?;
     }
 
-    ctx.accounts.stake_account.stake_reclaimed = true;
+    ctx.accounts.stake_account.unstaked = true;
 
-    emit_ts!(StakeReclaimedEvent {
+    emit_ts!(UnstakedEvent {
         owner: ctx.accounts.stake_account.owner,
         market: market.key(),
         stake_account: ctx.accounts.stake_account.key(),

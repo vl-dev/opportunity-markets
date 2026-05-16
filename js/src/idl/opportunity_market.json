@@ -1198,8 +1198,8 @@
           "type": "pubkey"
         },
         {
-          "name": "unstake_delay_seconds",
-          "type": "u64"
+          "name": "allow_unstaking_early",
+          "type": "bool"
         },
         {
           "name": "authorized_reader_pubkey",
@@ -1232,188 +1232,6 @@
         },
         {
           "name": "market_fee_claimer",
-          "type": "pubkey"
-        }
-      ]
-    },
-    {
-      "name": "do_unstake_early",
-      "discriminator": [
-        23,
-        184,
-        57,
-        106,
-        191,
-        197,
-        209,
-        50
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "market",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  112,
-                  112,
-                  111,
-                  114,
-                  116,
-                  117,
-                  110,
-                  105,
-                  116,
-                  121,
-                  95,
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market.creator",
-                "account": "OpportunityMarket"
-              },
-              {
-                "kind": "account",
-                "path": "market.index",
-                "account": "OpportunityMarket"
-              }
-            ]
-          }
-        },
-        {
-          "name": "stake_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "arg",
-                "path": "stake_account_owner"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "stake_account_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "market_token_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "owner_token_account",
-          "docs": [
-            "Owner's token account to receive refund"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "stake_account_id",
-          "type": "u32"
-        },
-        {
-          "name": "stake_account_owner",
           "type": "pubkey"
         }
       ]
@@ -2210,187 +2028,6 @@
       "args": []
     },
     {
-      "name": "reclaim_stake",
-      "discriminator": [
-        237,
-        113,
-        219,
-        76,
-        6,
-        246,
-        223,
-        84
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "owner"
-        },
-        {
-          "name": "market",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  112,
-                  112,
-                  111,
-                  114,
-                  116,
-                  117,
-                  110,
-                  105,
-                  116,
-                  121,
-                  95,
-                  109,
-                  97,
-                  114,
-                  107,
-                  101,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market.creator",
-                "account": "OpportunityMarket"
-              },
-              {
-                "kind": "account",
-                "path": "market.index",
-                "account": "OpportunityMarket"
-              }
-            ]
-          }
-        },
-        {
-          "name": "stake_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "stake_account_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "market_token_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "owner_token_account",
-          "docs": [
-            "Owner's token account to receive staked tokens"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "stake_account_id",
-          "type": "u32"
-        }
-      ]
-    },
-    {
       "name": "resolve_market",
       "discriminator": [
         155,
@@ -3119,16 +2756,16 @@
       "args": []
     },
     {
-      "name": "unstake_early",
+      "name": "unstake",
       "discriminator": [
-        246,
-        212,
-        81,
-        180,
-        65,
-        2,
-        126,
-        125
+        90,
+        95,
+        107,
+        42,
+        205,
+        124,
+        50,
+        225
       ],
       "accounts": [
         {
@@ -3137,7 +2774,47 @@
           "signer": true
         },
         {
-          "name": "market"
+          "name": "owner"
+        },
+        {
+          "name": "market",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  112,
+                  112,
+                  111,
+                  114,
+                  116,
+                  117,
+                  110,
+                  105,
+                  116,
+                  121,
+                  95,
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
+                "path": "market.index",
+                "account": "OpportunityMarket"
+              }
+            ]
+          }
         },
         {
           "name": "stake_account",
@@ -3164,7 +2841,7 @@
               },
               {
                 "kind": "account",
-                "path": "signer"
+                "path": "owner"
               },
               {
                 "kind": "account",
@@ -3176,6 +2853,80 @@
               }
             ]
           }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "owner_token_account",
+          "docs": [
+            "Owner's token account to receive staked tokens"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -3766,19 +3517,6 @@
       ]
     },
     {
-      "name": "StakeReclaimedEvent",
-      "discriminator": [
-        16,
-        112,
-        61,
-        40,
-        209,
-        210,
-        190,
-        109
-      ]
-    },
-    {
       "name": "StakeRevealedEvent",
       "discriminator": [
         251,
@@ -3854,19 +3592,6 @@
         32,
         124,
         230
-      ]
-    },
-    {
-      "name": "UnstakeInitiatedEvent",
-      "discriminator": [
-        172,
-        30,
-        149,
-        209,
-        165,
-        12,
-        177,
-        9
       ]
     },
     {
@@ -4024,51 +3749,41 @@
     },
     {
       "code": 6025,
-      "name": "UnstakeDelayNotMet",
-      "msg": "Unstake delay period has not passed yet"
-    },
-    {
-      "code": 6026,
-      "name": "UnstakeNotInitiated",
-      "msg": "Unstake has not been initiated"
-    },
-    {
-      "code": 6027,
       "name": "ClosingEarlyNotAllowed",
       "msg": "Market cannot be closed before stake period ends"
     },
     {
-      "code": 6028,
+      "code": 6026,
       "name": "NoFeesToClaim",
       "msg": "No fees to claim"
     },
     {
-      "code": 6029,
+      "code": 6027,
       "name": "StakeNotStuck",
       "msg": "Stake account is not in a stuck or failed state"
     },
     {
-      "code": 6030,
+      "code": 6028,
       "name": "MarketPaused",
       "msg": "Market staking is currently paused"
     },
     {
-      "code": 6031,
+      "code": 6029,
       "name": "MarketNotPaused",
       "msg": "Market is not paused"
     },
     {
-      "code": 6032,
+      "code": 6030,
       "name": "TimelockNotElapsed",
       "msg": "Timelock period has not elapsed yet"
     },
     {
-      "code": 6033,
+      "code": 6031,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     },
     {
-      "code": 6034,
+      "code": 6032,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
     }
@@ -4781,8 +4496,8 @@
             }
           },
           {
-            "name": "unstake_delay_seconds",
-            "type": "u64"
+            "name": "allow_unstaking_early",
+            "type": "bool"
           },
           {
             "name": "allow_closing_early",
@@ -5076,8 +4791,8 @@
             "type": "u16"
           },
           {
-            "name": "unstake_delay_seconds",
-            "type": "u64"
+            "name": "allow_unstaking_early",
+            "type": "bool"
           },
           {
             "name": "authorized_reader_pubkey",
@@ -5736,17 +5451,11 @@
             "type": "bool"
           },
           {
-            "name": "unstakeable_at_timestamp",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
             "name": "locked",
             "type": "bool"
           },
           {
-            "name": "stake_reclaimed",
+            "name": "unstaked",
             "type": "bool"
           },
           {
@@ -5846,38 +5555,6 @@
                 ]
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeReclaimedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account_id",
-            "type": "u32"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
           }
         ]
       }
@@ -6137,44 +5814,12 @@
       }
     },
     {
-      "name": "UnstakeInitiatedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "stake_account_id",
-            "type": "u32"
-          },
-          {
-            "name": "unstakeable_at_timestamp",
-            "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "UnstakedEvent",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "user",
+            "name": "owner",
             "type": "pubkey"
           },
           {
@@ -6188,6 +5833,10 @@
           {
             "name": "stake_account_id",
             "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
           },
           {
             "name": "timestamp",

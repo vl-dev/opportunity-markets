@@ -10,7 +10,6 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressDecoder,
   getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
@@ -43,19 +42,18 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const DO_UNSTAKE_EARLY_DISCRIMINATOR = new Uint8Array([
-  23, 184, 57, 106, 191, 197, 209, 50,
+export const UNSTAKE_DISCRIMINATOR = new Uint8Array([
+  90, 95, 107, 42, 205, 124, 50, 225,
 ]);
 
-export function getDoUnstakeEarlyDiscriminatorBytes() {
-  return fixEncoderSize(getBytesEncoder(), 8).encode(
-    DO_UNSTAKE_EARLY_DISCRIMINATOR
-  );
+export function getUnstakeDiscriminatorBytes() {
+  return fixEncoderSize(getBytesEncoder(), 8).encode(UNSTAKE_DISCRIMINATOR);
 }
 
-export type DoUnstakeEarlyInstruction<
+export type UnstakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
+  TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
@@ -73,6 +71,9 @@ export type DoUnstakeEarlyInstruction<
         ? WritableSignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
+      TAccountOwner extends string
+        ? ReadonlyAccount<TAccountOwner>
+        : TAccountOwner,
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
@@ -98,48 +99,43 @@ export type DoUnstakeEarlyInstruction<
     ]
   >;
 
-export type DoUnstakeEarlyInstructionData = {
+export type UnstakeInstructionData = {
   discriminator: ReadonlyUint8Array;
   stakeAccountId: number;
-  stakeAccountOwner: Address;
 };
 
-export type DoUnstakeEarlyInstructionDataArgs = {
-  stakeAccountId: number;
-  stakeAccountOwner: Address;
-};
+export type UnstakeInstructionDataArgs = { stakeAccountId: number };
 
-export function getDoUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<DoUnstakeEarlyInstructionDataArgs> {
+export function getUnstakeInstructionDataEncoder(): FixedSizeEncoder<UnstakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['stakeAccountId', getU32Encoder()],
-      ['stakeAccountOwner', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: DO_UNSTAKE_EARLY_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR })
   );
 }
 
-export function getDoUnstakeEarlyInstructionDataDecoder(): FixedSizeDecoder<DoUnstakeEarlyInstructionData> {
+export function getUnstakeInstructionDataDecoder(): FixedSizeDecoder<UnstakeInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['stakeAccountId', getU32Decoder()],
-    ['stakeAccountOwner', getAddressDecoder()],
   ]);
 }
 
-export function getDoUnstakeEarlyInstructionDataCodec(): FixedSizeCodec<
-  DoUnstakeEarlyInstructionDataArgs,
-  DoUnstakeEarlyInstructionData
+export function getUnstakeInstructionDataCodec(): FixedSizeCodec<
+  UnstakeInstructionDataArgs,
+  UnstakeInstructionData
 > {
   return combineCodec(
-    getDoUnstakeEarlyInstructionDataEncoder(),
-    getDoUnstakeEarlyInstructionDataDecoder()
+    getUnstakeInstructionDataEncoder(),
+    getUnstakeInstructionDataDecoder()
   );
 }
 
-export type DoUnstakeEarlyAsyncInput<
+export type UnstakeAsyncInput<
   TAccountSigner extends string = string,
+  TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
@@ -149,20 +145,21 @@ export type DoUnstakeEarlyAsyncInput<
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
   marketTokenAta?: Address<TAccountMarketTokenAta>;
-  /** Owner's token account to receive refund */
+  /** Owner's token account to receive staked tokens */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stakeAccountId: DoUnstakeEarlyInstructionDataArgs['stakeAccountId'];
-  stakeAccountOwner: DoUnstakeEarlyInstructionDataArgs['stakeAccountOwner'];
+  stakeAccountId: UnstakeInstructionDataArgs['stakeAccountId'];
 };
 
-export async function getDoUnstakeEarlyInstructionAsync<
+export async function getUnstakeInstructionAsync<
   TAccountSigner extends string,
+  TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
@@ -172,8 +169,9 @@ export async function getDoUnstakeEarlyInstructionAsync<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: DoUnstakeEarlyAsyncInput<
+  input: UnstakeAsyncInput<
     TAccountSigner,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -184,9 +182,10 @@ export async function getDoUnstakeEarlyInstructionAsync<
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  DoUnstakeEarlyInstruction<
+  UnstakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -203,6 +202,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
@@ -232,7 +232,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
             115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
-        getAddressEncoder().encode(expectSome(args.stakeAccountOwner)),
+        getAddressEncoder().encode(expectAddress(accounts.owner.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
         getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
@@ -258,6 +258,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
@@ -266,13 +267,14 @@ export async function getDoUnstakeEarlyInstructionAsync<
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getDoUnstakeEarlyInstructionDataEncoder().encode(
-      args as DoUnstakeEarlyInstructionDataArgs
+    data: getUnstakeInstructionDataEncoder().encode(
+      args as UnstakeInstructionDataArgs
     ),
     programAddress,
-  } as DoUnstakeEarlyInstruction<
+  } as UnstakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -283,8 +285,9 @@ export async function getDoUnstakeEarlyInstructionAsync<
   >);
 }
 
-export type DoUnstakeEarlyInput<
+export type UnstakeInput<
   TAccountSigner extends string = string,
+  TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
@@ -294,20 +297,21 @@ export type DoUnstakeEarlyInput<
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
   marketTokenAta: Address<TAccountMarketTokenAta>;
-  /** Owner's token account to receive refund */
+  /** Owner's token account to receive staked tokens */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stakeAccountId: DoUnstakeEarlyInstructionDataArgs['stakeAccountId'];
-  stakeAccountOwner: DoUnstakeEarlyInstructionDataArgs['stakeAccountOwner'];
+  stakeAccountId: UnstakeInstructionDataArgs['stakeAccountId'];
 };
 
-export function getDoUnstakeEarlyInstruction<
+export function getUnstakeInstruction<
   TAccountSigner extends string,
+  TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
@@ -317,8 +321,9 @@ export function getDoUnstakeEarlyInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: DoUnstakeEarlyInput<
+  input: UnstakeInput<
     TAccountSigner,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -328,9 +333,10 @@ export function getDoUnstakeEarlyInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): DoUnstakeEarlyInstruction<
+): UnstakeInstruction<
   TProgramAddress,
   TAccountSigner,
+  TAccountOwner,
   TAccountMarket,
   TAccountStakeAccount,
   TAccountTokenMint,
@@ -346,6 +352,7 @@ export function getDoUnstakeEarlyInstruction<
   // Original accounts.
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
@@ -375,6 +382,7 @@ export function getDoUnstakeEarlyInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
@@ -383,13 +391,14 @@ export function getDoUnstakeEarlyInstruction<
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getDoUnstakeEarlyInstructionDataEncoder().encode(
-      args as DoUnstakeEarlyInstructionDataArgs
+    data: getUnstakeInstructionDataEncoder().encode(
+      args as UnstakeInstructionDataArgs
     ),
     programAddress,
-  } as DoUnstakeEarlyInstruction<
+  } as UnstakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -400,34 +409,35 @@ export function getDoUnstakeEarlyInstruction<
   >);
 }
 
-export type ParsedDoUnstakeEarlyInstruction<
+export type ParsedUnstakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    market: TAccountMetas[1];
-    stakeAccount: TAccountMetas[2];
-    tokenMint: TAccountMetas[3];
-    marketTokenAta: TAccountMetas[4];
-    /** Owner's token account to receive refund */
-    ownerTokenAccount: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    systemProgram: TAccountMetas[7];
+    owner: TAccountMetas[1];
+    market: TAccountMetas[2];
+    stakeAccount: TAccountMetas[3];
+    tokenMint: TAccountMetas[4];
+    marketTokenAta: TAccountMetas[5];
+    /** Owner's token account to receive staked tokens */
+    ownerTokenAccount: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
   };
-  data: DoUnstakeEarlyInstructionData;
+  data: UnstakeInstructionData;
 };
 
-export function parseDoUnstakeEarlyInstruction<
+export function parseUnstakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedDoUnstakeEarlyInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+): ParsedUnstakeInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -441,6 +451,7 @@ export function parseDoUnstakeEarlyInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
+      owner: getNextAccount(),
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
       tokenMint: getNextAccount(),
@@ -449,6 +460,6 @@ export function parseDoUnstakeEarlyInstruction<
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getDoUnstakeEarlyInstructionDataDecoder().decode(instruction.data),
+    data: getUnstakeInstructionDataDecoder().decode(instruction.data),
   };
 }

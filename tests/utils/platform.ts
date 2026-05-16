@@ -38,9 +38,7 @@ import {
   incrementOptionTally,
   closeStakeAccount,
   closeStuckStakeAccount as closeStuckStakeAccountIx,
-  reclaimStake as reclaimStakeIx,
-  unstakeEarly as unstakeEarlyIx,
-  doUnstakeEarly as doUnstakeEarlyIx,
+  unstake as unstakeIx,
   openMarket as openMarketIx,
   pauseStaking as pauseStakingIx,
   resumeStaking as resumeStakingIx,
@@ -89,7 +87,7 @@ interface TestUser {
 interface MarketConfig {
   rewardAmount: bigint;
   timeToStake: bigint;
-  unstakeDelaySeconds: bigint;
+  allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
@@ -156,7 +154,7 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   marketConfig: {
     rewardAmount: 1_000_000_000n,
     timeToStake: 120n,
-    unstakeDelaySeconds: 10n,
+    allowUnstakingEarly: false,
     allowClosingEarly: true,
     earlinessCutoffSeconds: 0n,
     earlinessMultiplier: 10_000,
@@ -415,7 +413,7 @@ export class Platform {
       marketIndex,
       timeToStake: marketConfig.timeToStake,
       marketAuthority: runner.marketCreator.solanaKeypair.address,
-      unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
+      allowUnstakingEarly: marketConfig.allowUnstakingEarly,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
       allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
@@ -825,43 +823,6 @@ export class Platform {
     await this.revealStakeBatch([{ userId, stakeAccountId }]);
   }
 
-  async unstakeEarly(userId: Address, stakeAccountId: number): Promise<void> {
-    const user = this.getUser(userId);
-
-    const ix = await unstakeEarlyIx({
-      signer: user.solanaKeypair,
-      market: this.marketAddress,
-      stakeAccountId,
-    });
-
-    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
-      label: `Unstake early (initiate)`,
-    });
-  }
-
-  async doUnstakeEarly(
-    executorId: Address,
-    stakeOwnerId: Address,
-    stakeAccountId: number
-  ): Promise<void> {
-    const executor = this.getUser(executorId);
-    const owner = this.getUser(stakeOwnerId);
-
-    const ix = await doUnstakeEarlyIx({
-      signer: executor.solanaKeypair,
-      market: this.marketAddress,
-      tokenMint: this.mint.address,
-      ownerTokenAccount: owner.tokenAccount,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-      stakeAccountId,
-      stakeAccountOwner: stakeOwnerId,
-    });
-
-    await sendTransaction(this.rpc, this.sendAndConfirm, executor.solanaKeypair, [ix], {
-      label: `Do unstake early (execute)`,
-    });
-  }
-
   async incrementOptionTallyBatch(increments: TallyIncrement[]): Promise<void> {
     const instructions = await Promise.all(
       increments.map(async (inc) => {
@@ -990,11 +951,11 @@ export class Platform {
     return stakeAccountId;
   }
 
-  async reclaimStakeBatch(requests: RevealRequest[]): Promise<void> {
+  async unstakeBatch(requests: RevealRequest[]): Promise<void> {
     for (const r of requests) {
       const user = this.getUser(r.userId);
 
-      const ix = await reclaimStakeIx({
+      const ix = await unstakeIx({
         signer: user.solanaKeypair,
         owner: user.solanaKeypair.address,
         market: this.marketAddress,
@@ -1005,13 +966,13 @@ export class Platform {
       });
 
       await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
-        label: `Reclaim stake`,
+        label: `Unstake`,
       });
     }
   }
 
-  async reclaimStake(userId: Address, stakeAccountId: number): Promise<void> {
-    await this.reclaimStakeBatch([{ userId, stakeAccountId }]);
+  async unstake(userId: Address, stakeAccountId: number): Promise<void> {
+    await this.unstakeBatch([{ userId, stakeAccountId }]);
   }
 
   // ============================================================================
@@ -1156,8 +1117,8 @@ export class Platform {
     return this.marketConfig.rewardAmount;
   }
 
-  getUnstakeDelaySeconds(): bigint {
-    return this.marketConfig.unstakeDelaySeconds;
+  getAllowUnstakingEarly(): boolean {
+    return this.marketConfig.allowUnstakingEarly;
   }
 
   async getMarketAta(): Promise<Address> {

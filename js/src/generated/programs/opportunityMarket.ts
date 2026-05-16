@@ -23,7 +23,6 @@ import {
   type ParsedCloseStakeAccountInstruction,
   type ParsedCloseStuckStakeAccountInstruction,
   type ParsedCreateMarketInstruction,
-  type ParsedDoUnstakeEarlyInstruction,
   type ParsedEndRevealPeriodInstruction,
   type ParsedFinalizeNewFeeClaimAuthorityInstruction,
   type ParsedFinalizeNewUpdateAuthorityInstruction,
@@ -35,7 +34,6 @@ import {
   type ParsedPauseStakingInstruction,
   type ParsedProposeNewFeeClaimAuthorityInstruction,
   type ParsedProposeNewUpdateAuthorityInstruction,
-  type ParsedReclaimStakeInstruction,
   type ParsedResolveMarketInstruction,
   type ParsedResumeStakingInstruction,
   type ParsedRevealStakeCallbackInstruction,
@@ -45,7 +43,7 @@ import {
   type ParsedStakeCallbackInstruction,
   type ParsedStakeCompDefInstruction,
   type ParsedStakeInstruction,
-  type ParsedUnstakeEarlyInstruction,
+  type ParsedUnstakeInstruction,
   type ParsedUpdatePlatformConfigInstruction,
   type ParsedWithdrawRewardInstruction,
 } from '../instructions';
@@ -231,7 +229,6 @@ export enum OpportunityMarketInstruction {
   CloseStakeAccount,
   CloseStuckStakeAccount,
   CreateMarket,
-  DoUnstakeEarly,
   EndRevealPeriod,
   FinalizeNewFeeClaimAuthority,
   FinalizeNewUpdateAuthority,
@@ -243,7 +240,6 @@ export enum OpportunityMarketInstruction {
   PauseStaking,
   ProposeNewFeeClaimAuthority,
   ProposeNewUpdateAuthority,
-  ReclaimStake,
   ResolveMarket,
   ResumeStaking,
   RevealStake,
@@ -253,7 +249,7 @@ export enum OpportunityMarketInstruction {
   Stake,
   StakeCallback,
   StakeCompDef,
-  UnstakeEarly,
+  Unstake,
   UpdatePlatformConfig,
   WithdrawReward,
 }
@@ -360,17 +356,6 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.CreateMarket;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([23, 184, 57, 106, 191, 197, 209, 50])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.DoUnstakeEarly;
   }
   if (
     containsBytes(
@@ -497,17 +482,6 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([237, 113, 219, 76, 6, 246, 223, 84])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.ReclaimStake;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([155, 23, 80, 173, 46, 74, 23, 239])
       ),
       0
@@ -607,12 +581,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([246, 212, 81, 180, 65, 2, 126, 125])
+        new Uint8Array([90, 95, 107, 42, 205, 124, 50, 225])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.UnstakeEarly;
+    return OpportunityMarketInstruction.Unstake;
   }
   if (
     containsBytes(
@@ -672,9 +646,6 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.CreateMarket;
     } & ParsedCreateMarketInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.DoUnstakeEarly;
-    } & ParsedDoUnstakeEarlyInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.EndRevealPeriod;
     } & ParsedEndRevealPeriodInstruction<TProgram>)
   | ({
@@ -708,9 +679,6 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.ProposeNewUpdateAuthority;
     } & ParsedProposeNewUpdateAuthorityInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.ReclaimStake;
-    } & ParsedReclaimStakeInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.ResolveMarket;
     } & ParsedResolveMarketInstruction<TProgram>)
   | ({
@@ -738,8 +706,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.StakeCompDef;
     } & ParsedStakeCompDefInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.UnstakeEarly;
-    } & ParsedUnstakeEarlyInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.Unstake;
+    } & ParsedUnstakeInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.UpdatePlatformConfig;
     } & ParsedUpdatePlatformConfigInstruction<TProgram>)

@@ -27,9 +27,7 @@ pub struct CloseStakeAccount<'info> {
         bump = stake_account.bump,
         close = owner,
         // Staked tokens must have been returned before closing
-        constraint = stake_account.stake_reclaimed
-            || stake_account.unstaked_at_timestamp.is_some()
-            @ ErrorCode::InvalidAccountState,
+        constraint = stake_account.unstaked @ ErrorCode::InvalidAccountState,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 

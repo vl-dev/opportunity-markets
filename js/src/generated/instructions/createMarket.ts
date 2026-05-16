@@ -116,7 +116,7 @@ export type CreateMarketInstructionData = {
   marketIndex: bigint;
   timeToStake: bigint;
   marketAuthority: Address;
-  unstakeDelaySeconds: bigint;
+  allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
@@ -130,7 +130,7 @@ export type CreateMarketInstructionDataArgs = {
   marketIndex: number | bigint;
   timeToStake: number | bigint;
   marketAuthority: Address;
-  unstakeDelaySeconds: number | bigint;
+  allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
@@ -147,7 +147,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['marketIndex', getU64Encoder()],
       ['timeToStake', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
-      ['unstakeDelaySeconds', getU64Encoder()],
+      ['allowUnstakingEarly', getBooleanEncoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
@@ -166,7 +166,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['marketIndex', getU64Decoder()],
     ['timeToStake', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
-    ['unstakeDelaySeconds', getU64Decoder()],
+    ['allowUnstakingEarly', getBooleanDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
@@ -211,7 +211,7 @@ export type CreateMarketAsyncInput<
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
-  unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
+  allowUnstakingEarly: CreateMarketInstructionDataArgs['allowUnstakingEarly'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
@@ -393,7 +393,7 @@ export type CreateMarketInput<
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
-  unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
+  allowUnstakingEarly: CreateMarketInstructionDataArgs['allowUnstakingEarly'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];

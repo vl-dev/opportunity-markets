@@ -64,26 +64,22 @@ export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1786; // 6022
 export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1787; // 6023
 /** InvalidAccountState: Invalid account state */
 export const OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE = 0x1788; // 6024
-/** UnstakeDelayNotMet: Unstake delay period has not passed yet */
-export const OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET = 0x1789; // 6025
-/** UnstakeNotInitiated: Unstake has not been initiated */
-export const OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED = 0x178a; // 6026
 /** ClosingEarlyNotAllowed: Market cannot be closed before stake period ends */
-export const OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED = 0x178b; // 6027
+export const OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED = 0x1789; // 6025
 /** NoFeesToClaim: No fees to claim */
-export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x178c; // 6028
+export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x178a; // 6026
 /** StakeNotStuck: Stake account is not in a stuck or failed state */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178d; // 6029
+export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178b; // 6027
 /** MarketPaused: Market staking is currently paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178e; // 6030
+export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178c; // 6028
 /** MarketNotPaused: Market is not paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178f; // 6031
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178d; // 6029
 /** TimelockNotElapsed: Timelock period has not elapsed yet */
-export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x1790; // 6032
+export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x178e; // 6030
 /** StakeBelowMinimum: Stake amount is below the market minimum */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x1791; // 6033
+export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178f; // 6031
 /** SelectOptionsDeadlinePassed: Deadline for selecting winning options has passed */
-export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x1792; // 6034
+export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x1790; // 6032
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -118,8 +114,6 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED
   | typeof OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH
   | typeof OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
-  | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET
-  | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED
   | typeof OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED;
 
 let opportunityMarketErrorMessages:
@@ -159,8 +153,6 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED]: `Timelock period has not elapsed yet`,
     [OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH]: `Operation called outside its permitted time window`,
     [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
-    [OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET]: `Unstake delay period has not passed yet`,
-    [OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED]: `Unstake has not been initiated`,
     [OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED]: `Market winner already selected`,
   };
 }

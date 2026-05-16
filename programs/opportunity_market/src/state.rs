@@ -82,8 +82,7 @@ pub struct OpportunityMarket {
     // Peak earliness multiplier, PRECISION-scaled. Range [PRECISION, 2*PRECISION].
     pub earliness_multiplier: u16,
 
-    // Unstake delay seconds
-    pub unstake_delay_seconds: u64,
+    pub allow_unstaking_early: bool,
 
     // Public key for voluntary disclosure of encrypted stake data
     pub authorized_reader_pubkey: [u8; 32],
@@ -195,9 +194,8 @@ pub struct StakeAccount {
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,
-    pub unstakeable_at_timestamp: Option<u64>,
     pub locked: bool,
-    pub stake_reclaimed: bool, // whether staked tokens have been returned
+    pub unstaked: bool, // whether staked tokens have been returned
     pub id: u32,
 
     // Computation account pubkey of the in-flight stake computation. 

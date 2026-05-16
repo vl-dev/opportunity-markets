@@ -3,8 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::constants::{
-    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, MAX_UNSTAKE_DELAY_SECONDS,
-    OPPORTUNITY_MARKET_SEED,
+    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_MARKET_SEED,
 };
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
@@ -58,7 +57,7 @@ pub fn create_market(
     market_index: u64,
     time_to_stake: u64,
     market_authority: Pubkey,
-    unstake_delay_seconds: u64,
+    allow_unstaking_early: bool,
     authorized_reader_pubkey: [u8; 32],
     allow_closing_early: bool,
     reveal_period_authority: Pubkey,
@@ -71,8 +70,7 @@ pub fn create_market(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
             && earliness_cutoff_seconds <= time_to_stake
             && (earliness_multiplier as u64) >= PRECISION
-            && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER
-            && unstake_delay_seconds <= MAX_UNSTAKE_DELAY_SECONDS,
+            && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER,
         ErrorCode::InvalidParameters
     );
 
@@ -95,7 +93,7 @@ pub fn create_market(
     market.reveal_period_authority = reveal_period_authority;
     market.earliness_cutoff_seconds = earliness_cutoff_seconds;
     market.earliness_multiplier = earliness_multiplier;
-    market.unstake_delay_seconds = unstake_delay_seconds;
+    market.allow_unstaking_early = allow_unstaking_early;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
     market.platform_fee_bp = platform_fee_bp;
@@ -116,7 +114,7 @@ pub fn create_market(
         time_to_stake: time_to_stake,
         market_authority: market_authority,
         authorized_reader_pubkey: authorized_reader_pubkey,
-        unstake_delay_seconds: unstake_delay_seconds,
+        allow_unstaking_early: allow_unstaking_early,
         allow_closing_early: allow_closing_early,
         earliness_cutoff_seconds: earliness_cutoff_seconds,
         earliness_multiplier: earliness_multiplier,
