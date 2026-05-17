@@ -104,6 +104,7 @@ async function main() {
     earlinessMultiplier: config.earlinessMultiplier ?? 10_000,
     minStakeAmount: BigInt(config.minStakeAmount ?? 0),
     marketFeeClaimer: config.marketFeeClaimer ? address(config.marketFeeClaimer) : payer.address,
+    disableTimeWeighting: config.disableTimeWeighting ?? false,
     programAddress: PROGRAM_ID,
   });
 

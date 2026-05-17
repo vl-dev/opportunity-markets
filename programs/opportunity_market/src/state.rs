@@ -107,6 +107,9 @@ pub struct OpportunityMarket {
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
+
+    // When true, score drops the stake-time factor: score = s · e instead of s · t · e.
+    pub disable_time_weighting: bool,
 }
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]

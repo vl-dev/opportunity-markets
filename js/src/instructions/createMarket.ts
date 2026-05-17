@@ -22,6 +22,7 @@ export interface CreateMarketParams extends BaseInstructionParams {
   earlinessMultiplier: number;
   minStakeAmount: bigint;
   marketFeeClaimer: Address;
+  disableTimeWeighting: boolean;
 }
 
 export async function createMarket(

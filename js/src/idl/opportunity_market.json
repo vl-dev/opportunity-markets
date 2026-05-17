@@ -1230,6 +1230,10 @@
         {
           "name": "market_fee_claimer",
           "type": "pubkey"
+        },
+        {
+          "name": "disable_time_weighting",
+          "type": "bool"
         }
       ]
     },
@@ -1802,7 +1806,7 @@
       ],
       "accounts": [
         {
-          "name": "creator",
+          "name": "market_authority",
           "signer": true,
           "relations": [
             "market"
@@ -4537,6 +4541,10 @@
             "type": "u64"
           },
           {
+            "name": "disable_time_weighting",
+            "type": "bool"
+          },
+          {
             "name": "timestamp",
             "type": "i64"
           }
@@ -4857,6 +4865,10 @@
           {
             "name": "min_stake_amount",
             "type": "u64"
+          },
+          {
+            "name": "disable_time_weighting",
+            "type": "bool"
           }
         ]
       }

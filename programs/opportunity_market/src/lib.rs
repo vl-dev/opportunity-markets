@@ -128,6 +128,7 @@ pub mod opportunity_market {
         earliness_multiplier: u16,
         min_stake_amount: u64,
         market_fee_claimer: Pubkey,
+        disable_time_weighting: bool,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -142,6 +143,7 @@ pub mod opportunity_market {
             earliness_multiplier,
             min_stake_amount,
             market_fee_claimer,
+            disable_time_weighting,
         )
     }
 

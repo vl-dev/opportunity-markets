@@ -65,6 +65,7 @@ pub fn create_market(
     earliness_multiplier: u16,
     min_stake_amount: u64,
     market_fee_claimer: Pubkey,
+    disable_time_weighting: bool,
 ) -> Result<()> {
     require!(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
@@ -106,6 +107,7 @@ pub fn create_market(
     market.max_reveal_period_seconds = max_reveal_period_seconds;
     market.reveal_ended = false;
     market.min_stake_amount = min_stake_amount;
+    market.disable_time_weighting = disable_time_weighting;
 
     emit_ts!(MarketCreatedEvent {
         market: market.key(),
@@ -126,6 +128,7 @@ pub fn create_market(
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
         min_reveal_period_seconds: min_reveal_period_seconds,
         max_reveal_period_seconds: max_reveal_period_seconds,
+        disable_time_weighting: disable_time_weighting,
     });
 
     Ok(())

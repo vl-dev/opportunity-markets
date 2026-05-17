@@ -44,17 +44,17 @@ export function getOpenMarketDiscriminatorBytes() {
 
 export type OpenMarketInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountCreator extends string | AccountMeta<string> = string,
+  TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountCreator extends string
-        ? ReadonlySignerAccount<TAccountCreator> &
-            AccountSignerMeta<TAccountCreator>
-        : TAccountCreator,
+      TAccountMarketAuthority extends string
+        ? ReadonlySignerAccount<TAccountMarketAuthority> &
+            AccountSignerMeta<TAccountMarketAuthority>
+        : TAccountMarketAuthority,
       TAccountMarket extends string
         ? WritableAccount<TAccountMarket>
         : TAccountMarket,
@@ -97,29 +97,36 @@ export function getOpenMarketInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type OpenMarketInput<
-  TAccountCreator extends string = string,
+  TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
 > = {
-  creator: TransactionSigner<TAccountCreator>;
+  marketAuthority: TransactionSigner<TAccountMarketAuthority>;
   market: Address<TAccountMarket>;
   openTimestamp: OpenMarketInstructionDataArgs['openTimestamp'];
 };
 
 export function getOpenMarketInstruction<
-  TAccountCreator extends string,
+  TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: OpenMarketInput<TAccountCreator, TAccountMarket>,
+  input: OpenMarketInput<TAccountMarketAuthority, TAccountMarket>,
   config?: { programAddress?: TProgramAddress }
-): OpenMarketInstruction<TProgramAddress, TAccountCreator, TAccountMarket> {
+): OpenMarketInstruction<
+  TProgramAddress,
+  TAccountMarketAuthority,
+  TAccountMarket
+> {
   // Program address.
   const programAddress =
     config?.programAddress ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    creator: { value: input.creator ?? null, isWritable: false },
+    marketAuthority: {
+      value: input.marketAuthority ?? null,
+      isWritable: false,
+    },
     market: { value: input.market ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -133,14 +140,18 @@ export function getOpenMarketInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.creator),
+      getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
     ],
     data: getOpenMarketInstructionDataEncoder().encode(
       args as OpenMarketInstructionDataArgs
     ),
     programAddress,
-  } as OpenMarketInstruction<TProgramAddress, TAccountCreator, TAccountMarket>);
+  } as OpenMarketInstruction<
+    TProgramAddress,
+    TAccountMarketAuthority,
+    TAccountMarket
+  >);
 }
 
 export type ParsedOpenMarketInstruction<
@@ -149,7 +160,7 @@ export type ParsedOpenMarketInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    creator: TAccountMetas[0];
+    marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
   };
   data: OpenMarketInstructionData;
@@ -175,7 +186,7 @@ export function parseOpenMarketInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { creator: getNextAccount(), market: getNextAccount() },
+    accounts: { marketAuthority: getNextAccount(), market: getNextAccount() },
     data: getOpenMarketInstructionDataDecoder().decode(instruction.data),
   };
 }

@@ -72,7 +72,7 @@ async function main() {
   console.log(`Open at: ${openTimestamp}`);
 
   const ix = openMarket({
-    creator: payer,
+    marketAuthority: payer,
     market: marketAddress,
     openTimestamp,
     programAddress: PROGRAM_ID,

@@ -5,11 +5,11 @@ use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
 pub struct OpenMarket<'info> {
-    pub creator: Signer<'info>,
+    pub market_authority: Signer<'info>,
 
     #[account(
         mut,
-        has_one = creator @ ErrorCode::Unauthorized,
+        has_one = market_authority @ ErrorCode::Unauthorized,
         constraint = market.open_timestamp.is_none() @ ErrorCode::MarketAlreadyOpen,
     )]
     pub market: Account<'info, OpportunityMarket>,
@@ -18,7 +18,6 @@ pub struct OpenMarket<'info> {
 pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
-    // Check that open_timestamp is in the future
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
 
@@ -27,7 +26,6 @@ pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> 
         ErrorCode::InvalidParameters
     );
 
-    // Set open_timestamp and transition state to Funded
     market.open_timestamp = Some(open_timestamp);
 
     emit_ts!(MarketOpenedEvent {

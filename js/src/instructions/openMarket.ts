@@ -6,7 +6,7 @@ import {
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface OpenMarketParams extends BaseInstructionParams {
-  creator: TransactionSigner;
+  marketAuthority: TransactionSigner;
   market: Address;
   openTimestamp: bigint;
 }

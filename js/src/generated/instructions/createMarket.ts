@@ -124,6 +124,7 @@ export type CreateMarketInstructionData = {
   earlinessMultiplier: number;
   minStakeAmount: bigint;
   marketFeeClaimer: Address;
+  disableTimeWeighting: boolean;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -138,6 +139,7 @@ export type CreateMarketInstructionDataArgs = {
   earlinessMultiplier: number;
   minStakeAmount: number | bigint;
   marketFeeClaimer: Address;
+  disableTimeWeighting: boolean;
 };
 
 export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<CreateMarketInstructionDataArgs> {
@@ -155,6 +157,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['earlinessMultiplier', getU16Encoder()],
       ['minStakeAmount', getU64Encoder()],
       ['marketFeeClaimer', getAddressEncoder()],
+      ['disableTimeWeighting', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -174,6 +177,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['earlinessMultiplier', getU16Decoder()],
     ['minStakeAmount', getU64Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
+    ['disableTimeWeighting', getBooleanDecoder()],
   ]);
 }
 
@@ -219,6 +223,7 @@ export type CreateMarketAsyncInput<
   earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
   marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
+  disableTimeWeighting: CreateMarketInstructionDataArgs['disableTimeWeighting'];
 };
 
 export async function getCreateMarketInstructionAsync<
@@ -401,6 +406,7 @@ export type CreateMarketInput<
   earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
   marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
+  disableTimeWeighting: CreateMarketInstructionDataArgs['disableTimeWeighting'];
 };
 
 export function getCreateMarketInstruction<

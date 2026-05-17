@@ -425,6 +425,7 @@ export class Platform {
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
+      disableTimeWeighting: false,
       marketFeeClaimer:
         marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
     });
@@ -535,7 +536,7 @@ export class Platform {
     const timestamp = openTimestampArg ?? BigInt(Math.floor(Date.now() / 1000) + 6);
 
     const ix = openMarketIx({
-      creator: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       openTimestamp: timestamp,
     });

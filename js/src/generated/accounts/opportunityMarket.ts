@@ -95,6 +95,7 @@ export type OpportunityMarket = {
   maxRevealPeriodSeconds: bigint;
   revealEnded: boolean;
   minStakeAmount: bigint;
+  disableTimeWeighting: boolean;
 };
 
 export type OpportunityMarketArgs = {
@@ -126,6 +127,7 @@ export type OpportunityMarketArgs = {
   maxRevealPeriodSeconds: number | bigint;
   revealEnded: boolean;
   minStakeAmount: number | bigint;
+  disableTimeWeighting: boolean;
 };
 
 export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
@@ -160,6 +162,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['maxRevealPeriodSeconds', getU64Encoder()],
       ['revealEnded', getBooleanEncoder()],
       ['minStakeAmount', getU64Encoder()],
+      ['disableTimeWeighting', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
   );
@@ -196,6 +199,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['maxRevealPeriodSeconds', getU64Decoder()],
     ['revealEnded', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
+    ['disableTimeWeighting', getBooleanDecoder()],
   ]);
 }
 
