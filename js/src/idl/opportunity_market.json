@@ -412,6 +412,11 @@
               },
               {
                 "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
                 "path": "market.creator",
                 "account": "OpportunityMarket"
               },
@@ -537,6 +542,11 @@
                   101,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
               },
               {
                 "kind": "account",
@@ -669,6 +679,11 @@
                   101,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
               },
               {
                 "kind": "account",
@@ -883,6 +898,11 @@
               },
               {
                 "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
                 "path": "market.creator",
                 "account": "OpportunityMarket"
               },
@@ -1065,6 +1085,10 @@
                   101,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "platform_config"
               },
               {
                 "kind": "account",
@@ -2810,6 +2834,11 @@
               },
               {
                 "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
                 "path": "market.creator",
                 "account": "OpportunityMarket"
               },
@@ -3042,6 +3071,11 @@
                   101,
                   116
                 ]
+              },
+              {
+                "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
               },
               {
                 "kind": "account",

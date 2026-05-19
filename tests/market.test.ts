@@ -93,7 +93,7 @@ describe("OpportunityMarket", () => {
     // Wait for market staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    // Define voting: first half vote Option A, second half vote Option B
+    // First half stake on Option A, second half stake on Option B
     const stakeAmounts = [50_000_000n, 75_000_000n, 100_000_000n, 60_000_000n];
     const expectedPlatformFeePerUser = stakeAmounts.map(a => a * platformFeeBp / 10_000n);
     const expectedCreatorFeePerUser = stakeAmounts.map(a => a * creatorFeeBp / 10_000n);
@@ -484,7 +484,7 @@ describe("OpportunityMarket", () => {
     }
   });
 
-  it("allows users to vote for multiple options", async () => {
+  it("allows users to stake on multiple options", async () => {
     const marketFundingAmount = 1_000_000_000n;
     const stakeAmount = 50_000_000n;
 
@@ -1316,8 +1316,6 @@ describe("OpportunityMarket", () => {
   it("expired market lets sponsors recover their deposits", async () => {
     const lockedAmount = 500_000_000n;
     const unlockedAmount = 300_000_000n;
-    // Wide windows so the in-resolution-window assertion can submit and land
-    // before the chain clock reaches expired_at.
     const timeToStake = 15n;
     const marketResolutionDeadlineSeconds = 15n;
 

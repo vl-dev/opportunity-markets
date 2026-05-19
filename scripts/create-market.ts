@@ -109,6 +109,7 @@ async function main() {
   });
 
   const [marketAddress] = await getOpportunityMarketAddress(
+    platformConfigAddress,
     payer.address,
     marketIndex,
     PROGRAM_ID,

@@ -435,6 +435,7 @@ export class Platform {
     });
 
     const [derivedMarket] = await getOpportunityMarketAddress(
+      runner.platformConfigAddress,
       runner.marketCreator.solanaKeypair.address,
       marketIndex,
       programId,

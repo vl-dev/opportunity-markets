@@ -24,7 +24,7 @@ pub struct CreateMarket<'info> {
         init,
         payer = creator,
         space = 8 + OpportunityMarket::INIT_SPACE,
-        seeds = [OPPORTUNITY_MARKET_SEED, creator.key().as_ref(), &market_index.to_le_bytes()],
+        seeds = [OPPORTUNITY_MARKET_SEED, platform_config.key().as_ref(), creator.key().as_ref(), &market_index.to_le_bytes()],
         bump,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,

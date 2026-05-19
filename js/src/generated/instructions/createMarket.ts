@@ -302,6 +302,9 @@ export async function getCreateMarketInstructionAsync<
             114, 107, 101, 116,
           ])
         ),
+        getAddressEncoder().encode(
+          expectAddress(accounts.platformConfig.value)
+        ),
         getAddressEncoder().encode(expectAddress(accounts.creator.value)),
         getU64Encoder().encode(expectSome(args.marketIndex)),
       ],

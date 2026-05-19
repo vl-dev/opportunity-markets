@@ -15,7 +15,7 @@ pub struct CloseStuckStakeAccount<'info> {
     pub signer: Signer<'info>,
 
     #[account(
-        seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
+        seeds = [OPPORTUNITY_MARKET_SEED, market.platform.as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
@@ -72,11 +72,13 @@ pub fn close_stuck_stake_account(
         .ok_or(ErrorCode::Overflow)?;
 
     if total_refund > 0 {
+        let platform = market.platform;
         let creator = market.creator;
         let index_bytes = market.index.to_le_bytes();
         let market_bump = market.bump;
         let market_seeds: &[&[&[u8]]] = &[&[
             OPPORTUNITY_MARKET_SEED,
+            platform.as_ref(),
             creator.as_ref(),
             &index_bytes,
             &[market_bump],

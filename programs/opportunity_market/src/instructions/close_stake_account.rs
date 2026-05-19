@@ -16,7 +16,7 @@ pub struct CloseStakeAccount<'info> {
 
     #[account(
         mut,
-        seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
+        seeds = [OPPORTUNITY_MARKET_SEED, market.platform.as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
     )]
     pub market: Account<'info, OpportunityMarket>,
@@ -104,11 +104,13 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     };
 
     if payout > 0 {
+        let platform = ctx.accounts.market.platform;
         let creator = ctx.accounts.market.creator;
         let index_bytes = ctx.accounts.market.index.to_le_bytes();
         let market_bump = ctx.accounts.market.bump;
         let market_seeds: &[&[&[u8]]] = &[&[
             OPPORTUNITY_MARKET_SEED,
+            platform.as_ref(),
             creator.as_ref(),
             &index_bytes,
             &[market_bump],
