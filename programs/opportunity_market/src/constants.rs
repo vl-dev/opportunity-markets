@@ -22,6 +22,8 @@ pub const MAX_MAX_REVEAL_PERIOD_SECONDS: u64 = 60 * 24 * 60 * 60;
 
 pub const MAX_EARLINESS_MULTIPLIER: u16 = 20_000;
 
+pub const MAX_TIME_TO_STAKE_SECONDS: u64 = 3 * 30 * 24 * 60 * 60;
+
 /// PDA seeds
 pub const PLATFORM_CONFIG_SEED: &[u8] = b"platform_config";
 pub const ALLOWED_MINT_SEED: &[u8] = b"allowed_mint";

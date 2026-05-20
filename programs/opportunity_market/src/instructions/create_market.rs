@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::constants::{
-    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_MARKET_SEED,
+    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, MAX_TIME_TO_STAKE_SECONDS, OPPORTUNITY_MARKET_SEED,
 };
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
@@ -69,6 +69,7 @@ pub fn create_market(
 ) -> Result<()> {
     require!(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
+            && time_to_stake <= MAX_TIME_TO_STAKE_SECONDS
             && earliness_cutoff_seconds <= time_to_stake
             && (earliness_multiplier as u64) >= PRECISION
             && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER,
