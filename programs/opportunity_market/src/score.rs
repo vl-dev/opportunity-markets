@@ -85,7 +85,9 @@ pub fn calculate_user_score(
 
     let user_score = weighted
         .checked_div(PRECISION as u128)
-        .ok_or(ErrorCode::Overflow)? as u64;
+        .ok_or(ErrorCode::Overflow)?
+        .try_into()
+        .map_err(|_| ErrorCode::Overflow)?;
 
     Ok(user_score)
 }
@@ -224,6 +226,23 @@ mod tests {
     }
 
     #[test]
+    fn realistic_full_score_with_1_5x_multiplier_overflow() {
+        // Stake 1M tokens (9 decimals) at t=0 of a 1-week market, never unstake.
+        let reveal_start = MARKET_OPENED + ONE_WEEK;
+        let result = calculate_user_score(
+            MARKET_OPENED,
+            reveal_start,
+            MARKET_OPENED,
+            reveal_start,
+            STAKE * 200,
+            ONE_WEEK,
+            MULT_1_5X,
+        );
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap(), ErrorCode::Overflow.into());
+    }
+
+    #[test]
     fn max_u64_stake_does_not_overflow() {
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let result = calculate_user_score(
@@ -235,7 +254,8 @@ mod tests {
             ONE_WEEK,
             MULT_2X,
         );
-        assert!(result.is_ok());
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap(), ErrorCode::Overflow.into());
     }
 
     #[test]
