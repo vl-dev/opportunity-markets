@@ -254,7 +254,8 @@ mod tests {
             ONE_WEEK,
             MULT_2X,
         );
-        assert!(result.is_ok());
+        assert!(result.is_err());
+        assert_eq!(result.err().unwrap(), ErrorCode::Overflow.into());
     }
 
     #[test]
