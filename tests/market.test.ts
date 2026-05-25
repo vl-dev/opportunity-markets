@@ -1146,9 +1146,9 @@ describe("OpportunityMarket", () => {
     // Stake account records each fee component plus the net stake.
     const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
-    expect(stakeAccount.data.fees.platformFee).to.equal(expectedPlatformFee);
-    expect(stakeAccount.data.fees.rewardPoolFee).to.equal(expectedRewardPoolFee);
-    expect(stakeAccount.data.fees.creatorFee).to.equal(expectedCreatorFee);
+    expect(stakeAccount.data.collectedFees.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.collectedFees.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.collectedFees.creatorFee).to.equal(expectedCreatorFee);
 
     // Market accumulators credit each fee bucket appropriately.
     let market = await platform.fetchMarket();
@@ -1230,9 +1230,9 @@ describe("OpportunityMarket", () => {
     const stakeAccountId = await platform.stakeOnOption(user, stakeAmount, optionId);
 
     const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
-    expect(stakeAccount.data.fees.platformFee).to.equal(expectedPlatformFee);
-    expect(stakeAccount.data.fees.rewardPoolFee).to.equal(expectedRewardPoolFee);
-    expect(stakeAccount.data.fees.creatorFee).to.equal(expectedCreatorFee);
+    expect(stakeAccount.data.collectedFees.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.collectedFees.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.collectedFees.creatorFee).to.equal(expectedCreatorFee);
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
 
     // Wait past stake_end + market_resolution_deadline without selecting winners.
