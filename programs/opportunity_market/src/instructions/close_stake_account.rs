@@ -162,7 +162,7 @@ fn compute_winning_payout(
         return Ok(0);
     }
 
-    if !stake_account.total_incremented {
+    if stake_account.score.is_none() {
         return Ok(0);
     }
 
