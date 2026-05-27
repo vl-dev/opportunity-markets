@@ -161,12 +161,16 @@ pub mod opportunity_market {
         instructions::finalize_reveal_stake(ctx, option_id, stake_account_id)
     }
 
-    pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, stake_account_id: u32) -> Result<()> {
+    pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>, option_id: u64, stake_account_id: u32) -> Result<()> {
         instructions::close_stake_account(ctx, option_id, stake_account_id)
     }
 
     pub fn close_stuck_stake_account(ctx: Context<CloseStuckStakeAccount>, stake_account_id: u32) -> Result<()> {
         instructions::close_stuck_stake_account(ctx, stake_account_id)
+    }
+
+    pub fn close_option_account(ctx: Context<CloseOptionAccount>, option_id: u64) -> Result<()> {
+        instructions::close_option_account(ctx, option_id)
     }
 
     pub fn unstake(ctx: Context<Unstake>, stake_account_id: u32) -> Result<()> {

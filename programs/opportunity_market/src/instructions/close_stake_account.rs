@@ -31,11 +31,12 @@ pub struct CloseStakeAccount<'info> {
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
-    #[account(
+    /// CHECK: May be a closed account for non-winning options. PDA is validated in handler.
+    #[account(mut,
         seeds = [OPTION_SEED, market.key().as_ref(), &option_id.to_le_bytes()],
-        bump = option.bump,
+        bump,
     )]
-    pub option: Box<Account<'info, OpportunityMarketOption>>,
+    pub option: UncheckedAccount<'info>,
 
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
@@ -62,7 +63,7 @@ pub struct CloseStakeAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _stake_account_id: u32) -> Result<()> {
+pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>, option_id: u64, _stake_account_id: u32) -> Result<()> {
     let clock = Clock::get()?;
     let current_time = clock.unix_timestamp as u64;
 
@@ -79,8 +80,17 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     let expired = !resolved && current_time >= select_deadline;
     require!(resolved || expired, ErrorCode::MarketNotResolved);
 
+    // Load option data if account is still open; a closed non-winning option has
+    // owner == SystemProgram and empty data after Anchor zeroes it out.
+    let option_exists = ctx.accounts.option.owner != &System::id() && !ctx.accounts.option.data_is_empty();
+    let option_acc: Option<Account<'info, OpportunityMarketOption>> = if option_exists {
+        Some(Account::<OpportunityMarketOption>::try_from(ctx.accounts.option.as_ref())?)
+    } else {
+        None
+    };
+
     let payout: u64 = if resolved {
-        // Rreveal period must be over.
+        // Reveal period must be over
         require!(
             ctx.accounts.market.reveal_ended,
             ErrorCode::MarketNotResolved,
@@ -96,10 +106,10 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
         compute_winning_payout(
             &ctx.accounts.stake_account,
             &ctx.accounts.market,
-            &ctx.accounts.option,
+            option_acc.as_ref(),
         )?
     } else {
-        // Market expired: refund reward_pool_fee + creator_fee.
+        // Market expired: refund reward_pool_fee + creator_fee
         let collected_fees = ctx.accounts.stake_account.collected_fees;
         ctx.accounts.market.deduct_stake_fees(&collected_fees)?
     };
@@ -137,6 +147,15 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     let staked_at_timestamp = stake_account.staked_at_timestamp.unwrap_or(stake_end);
     let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
     let score = stake_account.score.unwrap_or(0);
+
+    // Decrement total_staked and write back; skipped if option was already closed
+    if let Some(mut opt) = option_acc {
+        opt.total_staked = opt.total_staked
+            .checked_sub(stake_account.amount)
+            .ok_or(ErrorCode::Overflow)?;
+        opt.exit(ctx.program_id)?;
+    }
+
     emit_ts!(RewardClaimedEvent {
         owner: ctx.accounts.owner.key(),
         market: ctx.accounts.market.key(),
@@ -156,8 +175,13 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
 fn compute_winning_payout(
     stake_account: &Account<StakeAccount>,
     market: &Account<OpportunityMarket>,
-    option: &Account<OpportunityMarketOption>,
+    option: Option<&Account<OpportunityMarketOption>>,
 ) -> Result<u64> {
+    let option = match option {
+        None => return Ok(0),
+        Some(o) => o,
+    };
+
     if option.reward_percentage_bp.is_none() {
         return Ok(0);
     }

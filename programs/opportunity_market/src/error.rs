@@ -64,4 +64,14 @@ pub enum ErrorCode {
     SelectOptionsDeadlinePassed,
     #[msg("Invalid fee rates")]
     InvalidFeeRates,
+    #[msg("Option still needed")]
+    OptionStillNeeded,
+    #[msg("Creator mismatch")]
+    CreatorMismatch,
+    #[msg("Reveal period not over")]
+    RevealPeriodNotOver,
+    #[msg("No reward to claim")]
+    NoRewardToClaim,
+    #[msg("Reward already claimed")]
+    RewardAlreadyClaimed,
 }

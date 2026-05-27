@@ -230,6 +230,8 @@ pub struct StakeAccount {
 pub struct OpportunityMarketOption {
     pub bump: u8,
     pub id: u64,
+    pub creator: Pubkey,
+
     pub created_at: u64,
 
     pub total_staked: u64,

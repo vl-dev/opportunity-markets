@@ -50,6 +50,7 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
     option.bump = ctx.bumps.option;
     option.id = option_id;
     option.created_at = current_timestamp;
+    option.creator = ctx.accounts.signer.key();
 
     emit_ts!(MarketOptionCreatedEvent {
         option: option.key(),
