@@ -18,6 +18,7 @@ import {
   type ParsedAddRewardInstruction,
   type ParsedClaimCreatorFeesInstruction,
   type ParsedClaimFeesInstruction,
+  type ParsedCloseOptionAccountInstruction,
   type ParsedCloseStakeAccountInstruction,
   type ParsedCloseStuckStakeAccountInstruction,
   type ParsedCreateMarketInstruction,
@@ -148,6 +149,7 @@ export enum OpportunityMarketInstruction {
   AddReward,
   ClaimCreatorFees,
   ClaimFees,
+  CloseOptionAccount,
   CloseStakeAccount,
   CloseStuckStakeAccount,
   CreateMarket,
@@ -221,6 +223,17 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.ClaimFees;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([46, 121, 107, 240, 123, 190, 229, 1])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.CloseOptionAccount;
   }
   if (
     containsBytes(
@@ -506,6 +519,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.ClaimFees;
     } & ParsedClaimFeesInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.CloseOptionAccount;
+    } & ParsedCloseOptionAccountInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.CloseStakeAccount;
     } & ParsedCloseStakeAccountInstruction<TProgram>)

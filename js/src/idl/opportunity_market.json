@@ -474,6 +474,116 @@
       "args": []
     },
     {
+      "name": "close_option_account",
+      "discriminator": [
+        46,
+        121,
+        107,
+        240,
+        123,
+        190,
+        229,
+        1
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "creator",
+          "writable": true,
+          "relations": [
+            "option"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  112,
+                  112,
+                  111,
+                  114,
+                  116,
+                  117,
+                  110,
+                  105,
+                  116,
+                  121,
+                  95,
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.platform",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
+                "path": "market.index",
+                "account": "OpportunityMarket"
+              }
+            ]
+          }
+        },
+        {
+          "name": "option",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  112,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "option_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "option_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "close_stake_account",
       "discriminator": [
         246,
@@ -577,6 +687,7 @@
         },
         {
           "name": "option",
+          "writable": true,
           "pda": {
             "seeds": [
               {
@@ -2917,6 +3028,19 @@
       ]
     },
     {
+      "name": "OptionClosedEvent",
+      "discriminator": [
+        136,
+        137,
+        67,
+        71,
+        126,
+        120,
+        99,
+        45
+      ]
+    },
+    {
       "name": "RevealPeriodEndedEvent",
       "discriminator": [
         180,
@@ -3254,6 +3378,31 @@
       "code": 6030,
       "name": "InvalidFeeRates",
       "msg": "Invalid fee rates"
+    },
+    {
+      "code": 6031,
+      "name": "OptionStillNeeded",
+      "msg": "Option still needed"
+    },
+    {
+      "code": 6032,
+      "name": "CreatorMismatch",
+      "msg": "Creator mismatch"
+    },
+    {
+      "code": 6033,
+      "name": "RevealPeriodNotOver",
+      "msg": "Reveal period not over"
+    },
+    {
+      "code": 6034,
+      "name": "NoRewardToClaim",
+      "msg": "No reward to claim"
+    },
+    {
+      "code": 6035,
+      "name": "RewardAlreadyClaimed",
+      "msg": "Reward already claimed"
     }
   ],
   "types": [
@@ -4289,6 +4438,10 @@
             "type": "u64"
           },
           {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
             "name": "created_at",
             "type": "u64"
           },
@@ -4301,12 +4454,10 @@
             "type": "u64"
           },
           {
-            "name": "selected",
-            "type": "bool"
-          },
-          {
             "name": "reward_percentage_bp",
-            "type": "u16"
+            "type": {
+              "option": "u16"
+            }
           }
         ]
       }
@@ -4335,6 +4486,38 @@
           {
             "name": "reward_locked",
             "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OptionClosedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "option",
+            "type": "pubkey"
+          },
+          {
+            "name": "option_id",
+            "type": "u64"
+          },
+          {
+            "name": "signer",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -4912,14 +5095,6 @@
             "type": {
               "option": "u64"
             }
-          },
-          {
-            "name": "total_incremented",
-            "type": "bool"
-          },
-          {
-            "name": "locked",
-            "type": "bool"
           },
           {
             "name": "unstaked",

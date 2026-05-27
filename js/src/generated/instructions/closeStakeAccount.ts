@@ -82,7 +82,7 @@ export type CloseStakeAccountInstruction<
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
       TAccountOption extends string
-        ? ReadonlyAccount<TAccountOption>
+        ? WritableAccount<TAccountOption>
         : TAccountOption,
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
@@ -216,7 +216,7 @@ export async function getCloseStakeAccountInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    option: { value: input.option ?? null, isWritable: false },
+    option: { value: input.option ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
     marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     ownerTokenAccount: {
@@ -380,7 +380,7 @@ export function getCloseStakeAccountInstruction<
     owner: { value: input.owner ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    option: { value: input.option ?? null, isWritable: false },
+    option: { value: input.option ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
     marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     ownerTokenAccount: {
