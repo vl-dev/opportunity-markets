@@ -29,7 +29,7 @@ pub struct CreateMarket<'info> {
 
     /// This ATA holds all of the market's program-held tokens (stakes, rewards, fees).
     #[account(
-        init,
+        init_if_needed,
         payer = creator,
         associated_token::mint = token_mint,
         associated_token::authority = market,
