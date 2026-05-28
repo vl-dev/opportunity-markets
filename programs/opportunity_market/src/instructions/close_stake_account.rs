@@ -150,11 +150,15 @@ pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>,
     let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
     let score = stake_account.score.unwrap_or(0);
 
-    // Decrement total_staked and write back; skipped if option was already closed
+    // Decrement total_staked and write back; skipped if option was already closed.
     if let Some(mut opt) = option_acc {
-        opt.total_staked = opt.total_staked
-            .checked_sub(stake_account.amount)
-            .ok_or(ErrorCode::Overflow)?;
+
+        // Only decrement if stake reveal was finalized and `total_staked` was incremented
+        if stake_account.score.is_some() {
+            opt.total_staked = opt.total_staked
+                .checked_sub(stake_account.amount)
+                .ok_or(ErrorCode::Overflow)?;
+        }
         opt.exit(ctx.program_id)?;
     }
 
