@@ -82,8 +82,6 @@ pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>,
 
     // Load option data if account is still open; a closed non-winning option has
     // owner == SystemProgram and empty data after Anchor zeroes it out.
-
-
     let option_closed = ctx.accounts.option.owner == &System::id() && ctx.accounts.option.data_is_empty();
     let option_acc: Option<Account<'info, OpportunityMarketOption>> = if !option_closed {
         Some(Account::<OpportunityMarketOption>::try_from(ctx.accounts.option.as_ref())?)
