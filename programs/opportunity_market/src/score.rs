@@ -21,9 +21,7 @@ pub fn calculate_user_score_components(
         .ok_or(ErrorCode::Overflow)?;
 
     // saturating_sub: a stake placed before the option existed gets peak earliness boost
-    let stake_since_creation = user_staked_at
-        .saturating_sub(option_created)
-        .max(1);
+    let stake_since_creation = user_staked_at.saturating_sub(option_created).max(1);
 
     let actual_stake_duration = user_stake_end
         .checked_sub(user_staked_at)
@@ -300,16 +298,9 @@ mod tests {
         // Staker unstakes the same second they stake.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let t = MARKET_OPENED + 60;
-        let score = calculate_user_score(
-            MARKET_OPENED,
-            reveal_start,
-            t,
-            t,
-            STAKE,
-            ONE_WEEK,
-            MULT_2X,
-        )
-        .unwrap();
+        let score =
+            calculate_user_score(MARKET_OPENED, reveal_start, t, t, STAKE, ONE_WEEK, MULT_2X)
+                .unwrap();
 
         assert_eq!(score, 0);
     }
