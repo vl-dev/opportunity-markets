@@ -38,6 +38,7 @@ import {
   revealStake,
   finalizeRevealStake,
   closeStakeAccount,
+  closeOptionAccount,
   closeStuckStakeAccount as closeStuckStakeAccountIx,
   unstake as unstakeIx,
   openMarket as openMarketIx,
@@ -564,15 +565,15 @@ export class Platform {
   }
 
   async selectWinningOptions(
-    selections: Array<{ optionId: number; rewardPercentageBp: number }>,
+    selections: Array<{ optionId: number; rewardBp: number }>,
   ): Promise<void> {
     const setIxs = await Promise.all(
-      selections.map(({ optionId, rewardPercentageBp }) =>
+      selections.map(({ optionId, rewardBp }) =>
         setWinningOptionIx({
           marketAuthority: this.marketCreator.solanaKeypair,
           market: this.marketAddress,
           optionId,
-          rewardPercentageBp,
+          rewardBp,
         }),
       ),
     );
@@ -592,19 +593,19 @@ export class Platform {
   }
 
   async selectSingleWinningOption(optionId: number): Promise<void> {
-    await this.selectWinningOptions([{ optionId, rewardPercentageBp: 10_000 }]);
+    await this.selectWinningOptions([{ optionId, rewardBp: 10_000 }]);
   }
 
-  async setWinningOption(optionId: number, rewardPercentageBp: number): Promise<void> {
+  async setWinningOption(optionId: number, rewardBp: number): Promise<void> {
     const ix = await setWinningOptionIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
-      rewardPercentageBp,
+      rewardBp,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: `Set winning option ${optionId} = ${rewardPercentageBp} bp`,
+      label: `Set winning option ${optionId} = ${rewardBp} bp`,
     });
   }
 
@@ -897,6 +898,19 @@ export class Platform {
 
   async closeStakeAccount(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
     await this.closeStakeAccountBatch([{ userId, optionId, stakeAccountId }]);
+  }
+
+  async closeOptionAccount(optionId: number): Promise<void> {
+    const ix = await closeOptionAccount({
+      signer: this.marketCreator.solanaKeypair,
+      creator: this.creator,
+      market: this.marketAddress,
+      optionId,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: `Close option account ${optionId}`,
+    });
   }
 
   /**

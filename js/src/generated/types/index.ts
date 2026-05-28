@@ -33,6 +33,7 @@ export * from './nodeMetadata';
 export * from './nodeRef';
 export * from './offChainCircuitSource';
 export * from './onChainCircuitSource';
+export * from './optionClosedEvent';
 export * from './output';
 export * from './parameter';
 export * from './revealPeriodEndedEvent';

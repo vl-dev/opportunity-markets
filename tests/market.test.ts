@@ -11,6 +11,8 @@ import {
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
   OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
   OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
+  OPPORTUNITY_MARKET_ERROR__OPTION_STILL_NEEDED,
+  OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
@@ -131,8 +133,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
     const winningOption = await platform.fetchOptionData(winningOptionIndex);
-    expect(winningOption.data.selected).to.be.true;
-    expect(winningOption.data.rewardPercentageBp).to.equal(10_000);
+    expect(isSome(winningOption.data.rewardBp)).to.be.true;
+    expect(unwrapOption(winningOption.data.rewardBp)).to.equal(10_000);
 
     // Reveal stakes for winners
     const winners = platform.participants.filter(
@@ -190,6 +192,16 @@ describe("OpportunityMarket", () => {
       })
     );
 
+    // Closing option accounts before the reveal period ends fails.
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(winningOptionIndex),
+      OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
+    );
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(optionB),
+      OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
+    );
+
     await platform.endRevealPeriod();
 
     // After the reveal period ends, the market creator can claim the
@@ -231,6 +243,12 @@ describe("OpportunityMarket", () => {
       }))
     );
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
+
+    // The winning option still cannot be closed while some stake accounts are open.
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(winningOptionIndex),
+      OPPORTUNITY_MARKET_ERROR__OPTION_STILL_NEEDED,
+    );
 
     // Close stake accounts for winners (transfers reward only)
     await platform.closeStakeAccountBatch(
@@ -316,6 +334,15 @@ describe("OpportunityMarket", () => {
 
     const marketAfter = await platform.fetchMarket();
     expect(marketAfter.data.collectedPlatformFees).to.equal(0n, "Market collected platform fees should be 0 after claiming");
+
+    // Close every option account
+    await platform.closeOptionAccount(winningOptionIndex);
+    await platform.closeOptionAccount(optionB);
+
+    for (const optionId of [winningOptionIndex, optionB]) {
+      const addr = await platform.getOptionAddress(optionId);
+      expect(await platform.accountExists(addr)).to.be.false;
+    }
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -366,24 +393,24 @@ describe("OpportunityMarket", () => {
     // Creator selects 3 winning options with different allocations: A=50%, B=30%, E=20%.
     await platform.waitForStakeEnd();
     await platform.selectWinningOptions([
-      { optionId: optA, rewardPercentageBp: 5000 },
-      { optionId: optB, rewardPercentageBp: 3000 },
-      { optionId: optE, rewardPercentageBp: 2000 },
+      { optionId: optA, rewardBp: 5000 },
+      { optionId: optB, rewardBp: 3000 },
+      { optionId: optE, rewardBp: 2000 },
     ]);
 
     // Verify market is resolved and each winning option carries its allocation.
     const resolvedMarket = await platform.fetchMarket();
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
-    const expectedWinners: Array<{ optionId: number; rewardPercentageBp: number }> = [
-      { optionId: optA, rewardPercentageBp: 5000 },
-      { optionId: optB, rewardPercentageBp: 3000 },
-      { optionId: optE, rewardPercentageBp: 2000 },
+    const expectedWinners: Array<{ optionId: number; rewardBp: number }> = [
+      { optionId: optA, rewardBp: 5000 },
+      { optionId: optB, rewardBp: 3000 },
+      { optionId: optE, rewardBp: 2000 },
     ];
-    for (const { optionId, rewardPercentageBp } of expectedWinners) {
+    for (const { optionId, rewardBp } of expectedWinners) {
       const opt = await platform.fetchOptionData(optionId);
-      expect(opt.data.selected).to.be.true;
-      expect(opt.data.rewardPercentageBp).to.equal(rewardPercentageBp);
+      expect(isSome(opt.data.rewardBp)).to.be.true;
+      expect(unwrapOption(opt.data.rewardBp)).to.equal(rewardBp);
     }
 
     // Reveal all stake accounts
@@ -715,8 +742,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
     expect(market.data.winningOptionAllocation).to.equal(10_000);
     const optionAAccount = await platform.fetchOptionData(optionA);
-    expect(optionAAccount.data.selected).to.be.true;
-    expect(optionAAccount.data.rewardPercentageBp).to.equal(10_000);
+    expect(isSome(optionAAccount.data.rewardBp)).to.be.true;
+    expect(unwrapOption(optionAAccount.data.rewardBp)).to.equal(10_000);
   });
 
   it("allows adding more reward during staking", async () => {
@@ -837,14 +864,12 @@ describe("OpportunityMarket", () => {
     expect(balanceBeforeStake - balanceAfterStake).to.equal(stakeAmount);
 
     let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.false;
     expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Single-step unstake during the staking window (allowed because market opted in).
     await platform.unstake(staker, stakeAccountId);
 
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.true;
     // Early unstake records the shortened staking window for scoring.
     expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
@@ -934,16 +959,14 @@ describe("OpportunityMarket", () => {
     );
 
     let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.false;
+    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Once stake_end has passed, unstake is permissionless
     await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
     await platform.unstake(staker, stakeAccountId, thirdParty);
 
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.true;
-    // Post-stake-end unstake does NOT record an early unstake timestamp.
-    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
+    expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
   });
 
   it("locked sponsor cannot withdraw but unlocked sponsor can", async () => {
