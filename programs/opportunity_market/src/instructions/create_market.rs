@@ -69,7 +69,7 @@ pub fn create_market(
     );
 
     let creator_key = ctx.accounts.creator.key();
-    let platform_key = ctx.accounts.platform_config.key();    
+    let platform_key = ctx.accounts.platform_config.key();
     let market_resolution_deadline_seconds = ctx
         .accounts
         .platform_config

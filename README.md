@@ -21,6 +21,25 @@ Arcium v0.9.2 cli required.
 Before testing, make sure you build without the feature `production-settings`.
 In `programs/opportunity_market/Cargo.toml` make sure it's not in the defaults array.
 
+### Formatting & linting
+
+`rustfmt` and `clippy` run over the whole workspace and are enforced in CI
+(`.github/workflows/ci.yml`). Before committing, run:
+
+```bash
+anchor run fmt   # cargo fmt --all + cargo clippy --fix across the workspace
+```
+
+CI runs the check-only equivalents:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+`too_many_arguments` and `diverging_sub_expression` are allowed in
+`programs/opportunity_market/Cargo.toml`.
+
 ### Program keypair
 
 Tests use a deterministic program keypair assumed to be located at `../B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg.json`. If you don't have this keypair, generate your own and update the

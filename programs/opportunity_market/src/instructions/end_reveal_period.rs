@@ -25,7 +25,10 @@ pub fn end_reveal_period(ctx: Context<EndRevealPeriod>) -> Result<()> {
     let earliest_end = resolved_at
         .checked_add(market.min_reveal_period_seconds)
         .ok_or(ErrorCode::Overflow)?;
-    require!(current_timestamp >= earliest_end, ErrorCode::TimeWindowMismatch);
+    require!(
+        current_timestamp >= earliest_end,
+        ErrorCode::TimeWindowMismatch
+    );
 
     // This instruction becomes permissionless after max_reveal_period elapses
     let permissionless_at = resolved_at
